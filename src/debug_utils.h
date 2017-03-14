@@ -3,8 +3,11 @@
 
 
 /**
-* Print to stdout considering the DEBUG_LEVEL. See the implementation for furthet details
+* Print to stdout considering the DEBUG_LEVEL. It's just a simple wrapper of printf
+* NOTE: print_msg will ignore DEBUG_LEVEL, so for generic printing you can use it.
+* just remember to pass a proper tag. For more details (level hierarchy) see debug_utils.c
 *
+* DEBUG_LEVEL is set in debug_utils.c
 **/
 
 void set_debug_level(int new_level);

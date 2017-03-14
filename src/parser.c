@@ -34,7 +34,7 @@ const int COMMENT_INPUT_ENTRIES = 7;
 /**
 * returns an array of strings that contains the chunks of line splitted by delim.
 * Two consecutive delims produces an empty string. This function will surely return
-* an array of char * POST_INPUT_ENTRIES big. It is your responsibility to free the
+* an array of char * that is dim big. It is your responsibility to free the
 * returned array and the pointed elements
 **/
 char ** parse_line(char * line, const char * delim, int dim)
@@ -109,7 +109,7 @@ comment * process_comment_line(char * line)
 
 
 /**
-*  Parse n_lines starting from post_fp. It returns an array of produces posts which will be read_lines big.
+*  Parse n_lines starting from post_fp. It returns an array of posts which will be read_lines big.
 * You can know the number of read_lines through the pointer read_lines.
 **/
 post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
@@ -173,7 +173,7 @@ post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
 
 
 
-
+//it is similar to parse_post. The logic is exactly the same. FIXME merge code between parse_comment and parse_post
 comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
 {
     if(n_lines<=0 || comm_fp==NULL)
@@ -206,7 +206,7 @@ comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
         comment * comm_buf=process_comment_line(line);
         if(comm_buf==NULL)
         {
-            print_warning("Error in process_post_line\n");
+            print_warning("Error in process_post_line");
             *read_lines=return_read_lines;
             break;
         }

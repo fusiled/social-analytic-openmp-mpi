@@ -6,9 +6,6 @@
 
 #include <stdlib.h>
 
-
-const int POST_SCORE_INIT = 10;
-
 //Creates a new post. A new empty comment_list is also created
 post * new_post(int ts, long post_id, long user_id)
 {

@@ -8,8 +8,7 @@
 extern const reply_type COMMENT_REPLY_TYPE;
 extern const reply_type POST_REPLY_TYPE;
 
-//create a new comment with the given timestamp and user_id (all we need)
-//the actual score is initialized with COMMENT_SCORE_INIT
+//create a new comment
 comment * new_comment(int ts, long comm_id, long user_id, long reply_id, reply_type repl_ty)
 {
 	if(reply_id==0)

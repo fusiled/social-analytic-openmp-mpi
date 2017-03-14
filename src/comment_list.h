@@ -6,8 +6,9 @@
 
 /**
 * Header for the comment lists. It is a simple linked list. comments are wrapped in list_entry elements.
-* elements are inserted at the head.
-* NOTE: list_entry should never be created by the user.
+* elements are inserted at the head. When a comment is inside a comment_list then the list is responsible
+* to delete it. del_comment_list should do all the dirty job of deletions.
+* NOTE: list_entry should never be created by the user. just use add_to_comment_list
 **/
 
 typedef struct list_entry_struct

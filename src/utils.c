@@ -3,6 +3,10 @@
 #include <stdlib.h>
 #include <time.h>
 
+/**
+* Header for utility functions
+*
+**/
 
 void del_double_ref_array(void ** array, int size)
 {

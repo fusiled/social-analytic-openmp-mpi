@@ -11,9 +11,7 @@ list_entry * new_list_entry(comment * com);
 //destroy the passed list_entry.
 void del_list_entry(list_entry * l_entry);
 
-
 //create an empty comment list
-//this is a simple list creator
 comment_list * new_comment_list()
 {
 	comment_list * ret_com_list = malloc(sizeof(comment_list));
@@ -26,8 +24,7 @@ comment_list * new_comment_list()
 }
 
 
-//add a new comment com to com_list at the head of the list. Once you pass a 
-//comment, then the comment_list is responsible to delete it.
+//add a new comment com to com_list at the head of the list.
 int add_to_comment_list(comment_list * com_list, comment * com)
 {
 	list_entry * new_head = new_list_entry(com); 
