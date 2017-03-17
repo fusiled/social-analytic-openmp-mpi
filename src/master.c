@@ -151,6 +151,19 @@ void send_posts_to_node(post * post_ar,int post_ar_size, int node_id){
   for(int i=0; i<post_ar_size;i++)
   {
     post * current_post = post_ar+i;
+    //fetch comment list
+    khiter_t k;
+    int ret, is_missing;
+    k = kh_get(post_comment_list_hashmap, pclh, current_post->post_id);
+    is_missing = (k == kh_end(pclh));   
+    // if the key is missing then create en empty comment_list: pclh[post_key]=new_comment_list()
+    if(is_missing)
+    {
+      k = kh_put(post_comment_list_hashmap, pclh, current_post->post_id, &ret); 
+      kh_value(pclh,k)=new_comment_list();
+      print_info("Adding new comment list for post %ld", current_post->post_id);
+    }
+    comment_list * comm_list = kh_value(pclh,k);
     int * post_ts = &(current_post->ts);
     long * post_id = &(current_post->post_id);
     long * user_id = &(current_post->user_id);
@@ -159,6 +172,7 @@ void send_posts_to_node(post * post_ar,int post_ar_size, int node_id){
     int * comment_ts;
     long * comment_user_id;
     int comment_ar_size;
+    build_arrays_from_comment_list(comm_list,comment_ts, comment_user_id, &comment_ar_size);
     //send stuff to node_id
     MPI_Send(post_ts,1,MPI_INT,node_id,POST_EXCHANGE_TAG,MPI_COMM_WORLD);
     MPI_Send(post_id,1,MPI_LONG,node_id,POST_EXCHANGE_TAG,MPI_COMM_WORLD);

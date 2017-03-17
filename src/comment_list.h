@@ -20,6 +20,7 @@ typedef struct list_entry_struct
 typedef struct comment_list_struct
 {
 	list_entry * head;
+	int size;
 
 } comment_list;
 
@@ -32,5 +33,9 @@ int add_to_comment_list(comment_list * com_list, comment * com);
 
 //this method also destroys all the elements contained in the list
 void del_comment_list(comment_list * com_ch);
+
+
+void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_user_id, int * out_size);
+
 
 #endif

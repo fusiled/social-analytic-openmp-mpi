@@ -20,11 +20,12 @@ comment_list * new_comment_list()
 		return NULL;
 	}
 	ret_com_list->head = NULL;
+	ret_com_list->size = 0;
 	return ret_com_list;
 }
 
 
-//add a new comment com to com_list at the head of the list.
+//add a new comment com to com_list at the head of the list. return the new size of the list
 int add_to_comment_list(comment_list * com_list, comment * com)
 {
 	list_entry * new_head = new_list_entry(com); 
@@ -34,7 +35,8 @@ int add_to_comment_list(comment_list * com_list, comment * com)
 	}
 	new_head->next = com_list->head;
 	com_list->head = new_head;
-	return 1;
+	com_list->size = com_list->size + 1;
+	return com_list->size;
 }
 
 //this method also destroys all the elements contained in the list
@@ -67,4 +69,23 @@ void del_list_entry(list_entry * l_entry)
 {
 	free(l_entry->comment);
 	free(l_entry);
+}
+
+
+
+void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_user_id, int * out_size)
+{
+	int cl_size = cl->size;
+	out_ts = calloc(sizeof(int), cl_size);
+	out_user_id = calloc(sizeof(long), cl_size);
+	int counter = 0;
+	list_entry * cur = cl->head;
+	while(cur!=NULL)
+	{
+		out_ts[counter]= (cur->comment)->ts;
+		out_user_id[counter]= (cur->comment)->user_id;
+		counter++;
+		cur = cur->next;
+	}
+	*out_size=cl_size;
 }
