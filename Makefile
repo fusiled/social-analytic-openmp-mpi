@@ -11,9 +11,9 @@
 
 
 #source file EXCEPT MAIN FILES here
-SRC = utils.c reply_type.c debug_utils.c comment.c comment_list.c post.c parser.c main.c
+SRC = utils.c global_variables.c reply_type.c post_block.c debug_utils.c comment.c comment_list.c post.c parser.c master.c worker.c main.c
 #your compiler
-CC = cc
+CC = mpicc
 
 #your flags
 CFLAGS= -g -fopenmp -D DEBUG -I/home/fusiled/uni/middleware/socialdata_small/src -D_GNU_SOURCE -D_XOPEN_SOURCE

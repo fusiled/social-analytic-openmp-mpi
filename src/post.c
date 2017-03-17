@@ -19,7 +19,6 @@ post * new_post(int ts, long post_id, long user_id)
 		print_warning("Cannot malloc comment_list");
 		return NULL;
 	}
-	ret_ref->score = POST_SCORE_INIT;
 	print_info("Returning a new post with ts=%d, post_id=%ld, user_id=%ld", ret_ref->ts, ret_ref->post_id, ret_ref->user_id);
 	return ret_ref;
 }

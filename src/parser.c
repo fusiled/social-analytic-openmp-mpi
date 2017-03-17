@@ -140,7 +140,7 @@ post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
 	char * line = NULL;
     while ( (return_read_lines<n_lines) && ((read = getline(&line, &len, post_fp)) != -1) )
     {
-    	print_msg("LINE","read line %s", line);
+    	print_fine("read line %s", line);
     	post * post_buf=process_post_line(line);
     	if(post_buf==NULL)
     	{
@@ -202,7 +202,7 @@ comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
     char * line = NULL;
     while (  (return_read_lines<n_lines) && ((read = getline(&line, &len, comm_fp)) != -1) )
     {
-        print_msg("LINE","read line %s", line);
+        print_fine("read line %s", line);
         comment * comm_buf=process_comment_line(line);
         if(comm_buf==NULL)
         {
