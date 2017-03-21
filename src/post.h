@@ -13,8 +13,6 @@ typedef struct post_struct
 	int ts;
 	long post_id;
 	long user_id;
-	int score;
-	comment_list * comment_list;
 } post;
 
 //Creates a new post. A new empty comment_list is also created
@@ -22,6 +20,8 @@ post * new_post(int ts, long post_id, long user_id);
 
 //destroys the post and the comment_list associated to it
 void del_post( post * post_ref);
+
+void del_post_array(post * post_ar, int size);
 
 //print to stdout the post instance
 void print_post( post * post);

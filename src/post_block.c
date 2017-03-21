@@ -21,6 +21,8 @@ post_block * new_post_block(int post_ts, long post_id, long user_id,
 	ret_pb->comment_ar_size = comment_ar_size;
 	ret_pb->comment_ts=comment_ts;
 	ret_pb->comment_user_id = comment_user_id;
+	//print_info("Created a new post_block with comment_ar_size: %d", ret_pb->comment_ar_size);
+	return ret_pb;
 }
 
 

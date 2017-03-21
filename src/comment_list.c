@@ -2,7 +2,10 @@
 
 
 #include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
 
+#include "debug_utils.h"
 
 //constructor for a new list_entry with the passed comment
 list_entry * new_list_entry(comment * com);
@@ -75,9 +78,14 @@ void del_list_entry(list_entry * l_entry)
 
 void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_user_id, int * out_size)
 {
+	//print_comment_list(cl);
 	int cl_size = cl->size;
 	out_ts = calloc(sizeof(int), cl_size);
 	out_user_id = calloc(sizeof(long), cl_size);
+	if(out_ts ==NULL || out_user_id == NULL)
+	{
+		print_error("Cannot calloc arrays");
+	}
 	int counter = 0;
 	list_entry * cur = cl->head;
 	while(cur!=NULL)
@@ -88,4 +96,25 @@ void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_
 		cur = cur->next;
 	}
 	*out_size=cl_size;
+	//print_fine("Produced arrays from comment list of size %d", *out_size);
+}
+
+
+void print_comment_list(comment_list * cl)
+{
+	char buffer[256];
+	char ltoa_buf[64];
+	buffer[0]='|';
+	buffer[1]='\0';
+	list_entry * cur = cl->head;
+	while(cur!=NULL)
+	{
+		comment * comm = cur->comment;
+		snprintf(ltoa_buf,sizeof(ltoa_buf),"%ld",comm->comm_id);
+		strcat(buffer,ltoa_buf);
+		strcat(buffer, "->");
+		cur = cur->next;
+	}
+	strcat(buffer, "|");
+	print_msg("COMMENT LIST", buffer);
 }
