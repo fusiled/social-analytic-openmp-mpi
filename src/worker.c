@@ -13,9 +13,10 @@
 
 extern const int MPI_MASTER;
 extern const int POST_NUMBER_TAG;
+extern const int POST_EXCHANGE_TAG;
 
 
-
+//receive a post from MPI_MASTER and return the associated post_block
 post_block * receive_post(int worker_id);
 
 post_block * receive_post(int worker_id)
@@ -77,7 +78,7 @@ int worker_execution(int argc , char * argv[], int worker_id)
 	    {
 	    	#pragma omp task
 	    	{
-	      		//compute trace?
+	      		//compute trace or do something
 	    	}
 	    }
 		//free post blocks and the array of pointers

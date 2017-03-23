@@ -3,7 +3,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 #include "debug_utils.h"
 
@@ -78,9 +77,17 @@ void del_list_entry(list_entry * l_entry)
 	free(l_entry);
 }
 
-
-
-void build_arrays_from_comment_list(comment_list * cl, int ** out_ts, long ** out_user_id, int * out_size)
+/**
+* \brief produces out_ts and out_user_id from the comment list cl
+* \param[in] cl reference to the comment list that will be processes
+* \param[out] out_ts reference to the array where timestamps will be saved
+* \param[out] out_user_id reference to the array where user_id of the comments 
+*		will be saved
+* \param[out] reference to where the dimension of the 2 produced array will be 
+*		saved
+**/
+void build_arrays_from_comment_list(comment_list * cl, int ** out_ts,
+		long ** out_user_id, int * out_size)
 {
 	if(cl==NULL)
 	{
@@ -105,6 +112,7 @@ void build_arrays_from_comment_list(comment_list * cl, int ** out_ts, long ** ou
 	}
 	int counter = 0;
 	list_entry * cur = cl->head;
+	//iterate over the list and save
 	while(cur!=NULL)
 	{
 		*(ts_ref+counter) = cur->comment->ts;
@@ -121,6 +129,7 @@ void build_arrays_from_comment_list(comment_list * cl, int ** out_ts, long ** ou
 
 void print_comment_list(comment_list * cl)
 {
+	//just build the string on the variable buffer and print it.
 	char buffer[256];
 	char ltoa_buf[64];
 	buffer[0]='|';

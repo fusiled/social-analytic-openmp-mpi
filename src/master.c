@@ -1,22 +1,27 @@
 #include "master.h"
 
-
+//src includes
+#include "khash.h"
 #include "debug_utils.h"
 #include "reply_type.h"
-#include "khash.h"
 #include "comment.h"
 #include "post.h"
 #include "parser.h"
 #include "global_variables.h"
-#include "utils.h"
 
-#include "mpi.h"
+
+//library includes
+#include <mpi.h>
 #include <omp.h>
+#include <time.h>
+#include <string.h>
+
+#define MAX_OUTPUT_NAME_SIZE 256
 
 #define BUCKET_SIZE 1000000
 // the number of post in the big dataset is 3594403
 
-
+//from reply_type.h
 extern const reply_type COMMENT_REPLY_TYPE;
 extern const reply_type POST_REPLY_TYPE;
 
@@ -24,27 +29,37 @@ extern const int POST_EXCHANGE_TAG;
 extern const int POST_NUMBER_TAG;
 
 extern const int MPI_MASTER;
-extern const int STOP_POST_TRANSMISSION;
+extern const int STOP_POST_TRANSMISSION_SIGNAL;
 
 
 //run these macros for hashmaps initializations
 KHASH_MAP_INIT_INT64(comment_post_hashmap, long)
 KHASH_MAP_INIT_INT64(post_comment_list_hashmap, comment_list *)
 
-khash_t(post_comment_list_hashmap) *pclh;
+
+//global variable for Post to Comment List Hashmap
+//pclh maps post_id to a comment_list
+khash_t(post_comment_list_hashmap) * pclh;
 
 
+//parse the comment file and build pclh
 void build_post_to_comment_list_hashmap(char * path_to_comment_file);
 
-//send the array pointed by post_ar (that is big post_ar_size) to node_id
+//send the array pointed by post_ar (that is big post_ar_size) to node_id and
+//the related comment list. The worker will recevied the combination of data and
+//will build a post block foreach post
 void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int node_id);
 
+
+//process to post file and send block of posts (at most big BUCKET_SIZE) to the workers
 void process_posts_and_transmit(char * path_to_post_file, int group_size);
 
 
 //update the node_id. This is used to decide to who send a bucket of posts.
 int update_node_id(int node_id, int group_size);
 
+//write the final result to output file
+void produce_output_file(char *output_file_name);
 
 int update_node_id(int node_id, int group_size)
 {
@@ -59,8 +74,18 @@ int update_node_id(int node_id, int group_size)
 
 int master_execution(int argc, char * argv[], int group_size, int * n_threads_array)
 {
- 
-  //init hashmaps
+  //argv[2] is the path to the comment file
+  //argv[1] is the path to the post file
+  time_t seconds = time(NULL);
+  char output_file_name [ MAX_OUTPUT_NAME_SIZE ];
+  char buffer [ MAX_OUTPUT_NAME_SIZE ];
+  output_file_name[0]='\0';
+  strcat(output_file_name,argv[3]);
+  snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(argv[3]),"%d",seconds);
+  strcat(output_file_name, "_");
+  strcat(output_file_name, buffer);
+  print_msg("OUTPUT","The output will be saved at file %s", output_file_name);
+  //init pclh
   pclh = kh_init(post_comment_list_hashmap); //pclh[post_id] -> comment_list
 
   build_post_to_comment_list_hashmap(argv[2]);
@@ -70,14 +95,15 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
 
-  //close everything
+  produce_output_file(output_file_name);
+
   free(n_threads_array);
   return 0;
 }
 
 
 void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int node_id){
-  //notify worker: we send it the number of posts that master will transmit
+  //notify worker: we send it the number of post blocks that master will transmit
   print_info("Sending post reception signal of %d to worker %d", *post_ar_size, node_id);
   MPI_Send(post_ar_size,1,MPI_INT,node_id,POST_NUMBER_TAG*node_id,MPI_COMM_WORLD);
   //send to node the number of posts that it will receive
@@ -239,7 +265,7 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size)
     {
       continue;
     }
-    MPI_Send(&STOP_POST_TRANSMISSION, 1, MPI_INT, i, POST_NUMBER_TAG*i, MPI_COMM_WORLD);
+    MPI_Send(&STOP_POST_TRANSMISSION_SIGNAL, 1, MPI_INT, i, POST_NUMBER_TAG*i, MPI_COMM_WORLD);
   }
   print_info("Signaled the end of post transmission to all the nodes");
 }

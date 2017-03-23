@@ -4,9 +4,8 @@
 //debug_utils
 extern int DEBUG_LEVEL;
 
+//MPI and communication signal
 extern const int MPI_MASTER;
-extern const int POST_EXCHANGE_TAG;
-extern const int POST_NUMBER_TAG;
-extern const int STOP_POST_TRANSMISSION;
+extern const int STOP_POST_TRANSMISSION_SIGNAL;
 
 #endif

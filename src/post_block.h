@@ -8,7 +8,7 @@
 *
 **/
 
-typedef struct post_block_struct
+typedef struct post_block
 {
 	int post_ts; //ts of the post
 	long post_id; // id of the post

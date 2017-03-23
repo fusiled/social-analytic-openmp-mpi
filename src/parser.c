@@ -9,14 +9,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-
+//from reply_type.h
 extern const reply_type COMMENT_REPLY_TYPE;
 extern const reply_type POST_REPLY_TYPE;
 
+
+//post fields
 const int POST_TIMESTAMP = 0;
 const int POST_ID = 1;
 const int POST_USER_ID = 2;
 
+
+//comment fields
 const int COMMENT_TIMESTAMP = 0;
 const int COMMENT_ID = 1;
 const int COMMENT_USER_ID = 2;

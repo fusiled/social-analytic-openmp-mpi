@@ -1,11 +1,16 @@
 #include "debug_utils.h"
 
+
+#include <stdio.h>
+#include <stdarg.h>
+
+
+#define NONE_LEVEL 0
 #define FINE_LEVEL 1
 #define INFO_LEVEL 2
 #define WARN_LEVEL 3
 #define ERROR_LEVEL 5
 #define ALL_LEVEL 10
-#define NONE_LEVEL 0
 
 
 #define ANSI_COLOR_RED     "\x1b[31m"
@@ -16,14 +21,10 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
-
-#include <stdio.h>
-#include <stdarg.h>
-
-char * WARN_TAG = "WARN";
-char * INFO_TAG = "INFO";
-char * FINE_TAG = "FINE";
-char * ERROR_TAG = "++ERROR++";
+#define FINE_TAG "FINE"
+#define INFO_TAG ANSI_COLOR_GREEN "INFO" ANSI_COLOR_RESET
+#define WARN_TAG ANSI_COLOR_YELLOW "WARN" ANSI_COLOR_RESET
+#define ERROR_TAG ANSI_COLOR_RED "++ERROR++" ANSI_COLOR_RESET
 
 int DEBUG_LEVEL = 0;
 

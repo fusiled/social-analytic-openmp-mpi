@@ -7,6 +7,7 @@
 #include <stdlib.h>
 
 #include "global_variables.h"
+#include "debug_utils.h"
 
 extern const int MPI_MASTER;
 

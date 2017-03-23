@@ -5,7 +5,7 @@
 
 
 //struct that wraps the useful informations about a comment in the preprocessing phase
-typedef struct comment_struct
+typedef struct comment
 {
 	int ts;
 	long comm_id;
