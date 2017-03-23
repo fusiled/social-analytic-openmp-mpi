@@ -45,6 +45,10 @@ int add_to_comment_list(comment_list * com_list, comment * com)
 //this method also destroys all the elements contained in the list
 void del_comment_list(comment_list * com_list)
 {
+	if(com_list==NULL)
+	{
+		return;
+	}
 	list_entry * cur = com_list->head;
 	while(cur!=NULL)
 	{
@@ -76,26 +80,41 @@ void del_list_entry(list_entry * l_entry)
 
 
 
-void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_user_id, int * out_size)
+void build_arrays_from_comment_list(comment_list * cl, int ** out_ts, long ** out_user_id, int * out_size)
 {
-	//print_comment_list(cl);
-	int cl_size = cl->size;
-	out_ts = calloc(sizeof(int), cl_size);
-	out_user_id = calloc(sizeof(long), cl_size);
-	if(out_ts ==NULL || out_user_id == NULL)
+	if(cl==NULL)
 	{
-		print_error("Cannot calloc arrays");
+		*out_ts=NULL;
+		*out_user_id=NULL;
+		*out_size=0;
+		//print_info("Passed a NULL pointer to build_array_from comment_list_function");
+		return;
+	}
+	int cl_size = cl->size;
+	int * ts_ref = calloc(sizeof(int), cl_size);
+	long * user_id_ref = calloc(sizeof(long), cl_size);
+	if(ts_ref == NULL)
+	{
+		print_error("Cannot alloc ts_ref");
+		return;
+	}
+	if(user_id_ref == NULL)
+	{
+		print_error("Cannot alloc user_id_ref");
+		return;
 	}
 	int counter = 0;
 	list_entry * cur = cl->head;
 	while(cur!=NULL)
 	{
-		out_ts[counter]= (cur->comment)->ts;
-		out_user_id[counter]= (cur->comment)->user_id;
+		*(ts_ref+counter) = cur->comment->ts;
+		user_id_ref[counter]= cur->comment->user_id;
 		counter++;
 		cur = cur->next;
 	}
 	*out_size=cl_size;
+	*out_ts=ts_ref;
+	*out_user_id=user_id_ref;
 	//print_fine("Produced arrays from comment list of size %d", *out_size);
 }
 

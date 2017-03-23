@@ -35,7 +35,7 @@ int add_to_comment_list(comment_list * com_list, comment * com);
 void del_comment_list(comment_list * com_ch);
 
 
-void build_arrays_from_comment_list(comment_list * cl, int * out_ts, long * out_user_id, int * out_size);
+void build_arrays_from_comment_list(comment_list * cl, int ** out_ts, long ** out_user_id, int * out_size);
 
 
 void print_comment_list(comment_list * cl);

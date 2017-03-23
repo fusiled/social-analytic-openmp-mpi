@@ -119,7 +119,7 @@ post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
 		return NULL;
 	}
     if(feof(post_fp)){
-        print_warning("reached end of file... returning null");
+        print_warning("reached end of POST file... returning null");
         return NULL;
     }
 	//the number of read lines from this function. This variable
@@ -182,7 +182,7 @@ comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
         return NULL;
     }
     if(feof(comm_fp)){
-        print_warning("reached end of file... returning null");
+        print_warning("reached end of COMMENT file... returning null");
         return NULL;
     }
     //the number of read lines from this function. This variable

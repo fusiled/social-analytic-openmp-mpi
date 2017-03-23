@@ -5,6 +5,9 @@
 #include "worker.h"
 #include "global_variables.h"
 
+#include "node_commons.h"
+
+
 #include "mpi.h"
 
 #include <stdio.h>
@@ -40,13 +43,16 @@ int main(int argc, char *argv[])
   int provided;
   //set_debug_level(3);
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
-  
   int rank;
   int ret_val;
-  MPI_Comm_rank (MPI_COMM_WORLD,&rank); 
+  int group_size;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
+  MPI_Comm_size(MPI_COMM_WORLD,&group_size); 
+  //gather at the root the number of available threads foreach node
+  int * n_threads_array =  get_n_threads_foreach_node(rank);
   if(rank==MPI_MASTER)
   {
-    ret_val = master_execution(argc, argv);
+    ret_val = master_execution(argc, argv, group_size, n_threads_array);
   }
   else
   {
