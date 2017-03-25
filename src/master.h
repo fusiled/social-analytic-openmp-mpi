@@ -2,6 +2,8 @@
 #define MASTER_H
 
 
-int master_execution(int argc , char * argv[], int group_size, int * n_threads_array);
+#include <mpi.h>
+
+int master_execution(int argc , char * argv[], int group_size, int * n_threads_array, MPI_Datatype mpi_top_three);
 
 #endif

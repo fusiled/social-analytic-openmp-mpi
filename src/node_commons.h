@@ -1,6 +1,8 @@
 #ifndef NODE_COMMONS_H
 #define NODE_COMMONS_H
 
+#include <mpi.h>
+
 /*
 * \function
 * \brief gather the number of threads for every node in the system. 
@@ -9,6 +11,6 @@
 **/
 int * get_n_threads_foreach_node();
 
-
+MPI_Datatype register_mpi_top_three();
 
 #endif

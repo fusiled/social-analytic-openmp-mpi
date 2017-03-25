@@ -49,15 +49,17 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
   MPI_Comm_size(MPI_COMM_WORLD,&group_size); 
   //gather at the root the number of available threads foreach node
+  MPI_Datatype mpi_top_three = register_mpi_top_three();
   int * n_threads_array =  get_n_threads_foreach_node(rank);
   if(rank==MPI_MASTER)
   {
-    ret_val = master_execution(argc, argv, group_size, n_threads_array);
+    ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_top_three);
   }
   else
   {
-    ret_val = worker_execution(argc, argv, rank);
+    ret_val = worker_execution(argc, argv, rank, mpi_top_three);
   }
+  MPI_Type_free(&mpi_top_three);
   MPI_Finalize();
   return ret_val;
 }

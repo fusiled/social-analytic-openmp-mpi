@@ -9,6 +9,8 @@
 #include "parser.h"
 #include "global_variables.h"
 
+#include "top_three.h"
+
 
 //library includes
 #include <mpi.h>
@@ -72,7 +74,7 @@ int update_node_id(int node_id, int group_size)
     return node_id;
 }
 
-int master_execution(int argc, char * argv[], int group_size, int * n_threads_array)
+int master_execution(int argc, char * argv[], int group_size, int * n_threads_array, MPI_Datatype mpi_top_three)
 {
   //argv[2] is the path to the comment file
   //argv[1] is the path to the post file
@@ -96,7 +98,8 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   kh_destroy(post_comment_list_hashmap, pclh);
 
   produce_output_file(output_file_name);
-
+  
+  
   free(n_threads_array);
   return 0;
 }
@@ -268,4 +271,10 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size)
     MPI_Send(&STOP_POST_TRANSMISSION_SIGNAL, 1, MPI_INT, i, POST_NUMBER_TAG*i, MPI_COMM_WORLD);
   }
   print_info("Signaled the end of post transmission to all the nodes");
+}
+
+
+void produce_output_file(char *output_file_name)
+{
+  //TODO make implementation
 }

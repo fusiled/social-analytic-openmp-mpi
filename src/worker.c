@@ -5,10 +5,11 @@
 #include "debug_utils.h"
 
 #include "post_block.h"
+#include "top_three.h"
 
 #include <stdlib.h>
 
-#include "mpi.h"
+#include <mpi.h>
 #include <omp.h>
 
 extern const int MPI_MASTER;
@@ -55,7 +56,7 @@ post_block * receive_post(int worker_id)
 }
 
 
-int worker_execution(int argc , char * argv[], int worker_id)
+int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_top_three)
 {
 	MPI_Status ret;
 	//wait for job reception. If i receive a negative number then i can stop to
@@ -93,6 +94,6 @@ int worker_execution(int argc , char * argv[], int worker_id)
 	free(n_posts);
 	print_msg("STOP SIGNAL", "Worker %d received the stop signal for post trasmission", worker_id);
 	//compute top3
-	//send top3
+	
 	return 0;
 }

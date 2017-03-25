@@ -45,3 +45,17 @@ void print_int_array(int * array, int size)
 	}
 	print_msg("INT ARRAY", buf);
 }
+
+
+
+//just wrap snprintf
+void itoa(int number, char * buffer)
+{
+	snprintf(buffer,sizeof(buffer),"%d",number);
+}
+
+//just wrap snprintf
+void ltoa(long number, char * buffer)
+{
+	snprintf(buffer,sizeof(buffer),"%ld",number);
+}

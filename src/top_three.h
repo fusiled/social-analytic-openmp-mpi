@@ -29,5 +29,7 @@ top_three * new_top_three(int ts, long p_post_id[TOP_NUMBER],
 void del_top_three(top_three * tt);
 
 
+void print_top_three(top_three * tt);
+
 
 #endif
