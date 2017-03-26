@@ -20,6 +20,8 @@
 
 #define MAX_OUTPUT_NAME_SIZE 256
 
+#define MAX_TS 2147483647
+
 #define BUCKET_SIZE 1000000
 // the number of post in the big dataset is 3594403
 
@@ -27,11 +29,12 @@
 extern const reply_type COMMENT_REPLY_TYPE;
 extern const reply_type POST_REPLY_TYPE;
 
+extern const int MPI_MASTER;
 extern const int POST_EXCHANGE_TAG;
 extern const int POST_NUMBER_TAG;
-
-extern const int MPI_MASTER;
 extern const int STOP_POST_TRANSMISSION_SIGNAL;
+extern const int TOP_THREE_NUMBER_TAG;
+extern const int TOP_THREE_TRANSMISSION_TAG;
 
 
 //run these macros for hashmaps initializations
@@ -61,7 +64,10 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size);
 int update_node_id(int node_id, int group_size);
 
 //write the final result to output file
-void produce_output_file(char *output_file_name);
+void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_top_three);
+
+//used in produce output file. Decided if quit the loop that produces the output file
+unsigned char check_quit_loop(unsigned char quit_loop, int * tt_counter, int * tt_size_ar, int array_dim);
 
 int update_node_id(int node_id, int group_size)
 {
@@ -97,8 +103,7 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
 
-  produce_output_file(output_file_name);
-  
+  produce_output_file(output_file_name, group_size, mpi_top_three);
   
   free(n_threads_array);
   return 0;
@@ -274,7 +279,155 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size)
 }
 
 
-void produce_output_file(char *output_file_name)
+unsigned char check_quit_loop(unsigned char quit_loop, int * tt_counter, int * tt_size_ar, int array_dim)
 {
-  //TODO make implementation
+  /*unsigned volatile char result = 1;
+  for(int i=0; i<array_dim; i++)
+    {
+      result &= (tt_counter[i]>=tt_size_ar[i]);
+    }
+  return result;*/
+  unsigned char quit = 1;
+  for(int i=0; i<array_dim; i++)
+  {
+    if(tt_counter[i]<=tt_size_ar[i])
+    {
+      quit=0;
+    }
+  }
+  return quit;
+}
+
+
+void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_top_three)
+{
+  //receive the top_three from all the workers and save the received array into tt_matrix
+  //tt_size_ar contains the dimension of the array transmitted from the workers.
+  //note that the array transmitted by worker i stays at position i-1
+  top_three ** tt_matrix = malloc(sizeof(top_three *)*(group_size-1) );
+  int * tt_size_ar = calloc(sizeof(int), group_size-1 );
+  for(int node_id=1; node_id<group_size; node_id++)
+  {
+    //it is useless to allocate space to MPI_MASTER
+    print_info("Receiving top_three from worker %d", node_id);
+    MPI_Status ret;
+    MPI_Recv(tt_size_ar+node_id-1,1,MPI_INT,node_id, TOP_THREE_NUMBER_TAG*node_id, MPI_COMM_WORLD, &ret);
+    tt_matrix[node_id-1]=malloc(sizeof(top_three)*tt_size_ar[node_id-1]);
+    MPI_Recv(tt_matrix[node_id-1],tt_size_ar[node_id-1],mpi_top_three,node_id, TOP_THREE_TRANSMISSION_TAG*node_id, MPI_COMM_WORLD, &ret);
+  }
+  print_info("Master received all the top_three from all the nodes");
+  for(int i=0; i<group_size-1; i++)
+  {
+    print_info("Worker %d", i+1);
+    for(int j=0; j<tt_size_ar[i];j++)
+    {
+      print_top_three(tt_matrix[i]+j);
+    }
+  }
+  //now we try to produce the output
+  FILE * out_fp = fopen(output_file_name,"w"); 
+  //tt_counter keep traces of the top_three that we have to consider along 
+  //the arrays contained by tt_matrix
+  int * tt_counter = calloc(sizeof(int),group_size-1);
+  top_three * last_tt = NULL;
+  unsigned char quit_loop = 0;
+  quit_loop = check_quit_loop(quit_loop, tt_counter, tt_size_ar, group_size-1);
+  print_info("Quit loop condition BEFORE loop: %hu", quit_loop);
+  while(quit_loop==0)
+  {
+    print_msg("ITER", "new sol iteration");
+    int ts = MAX_TS;
+    //get the minor timestamp
+    for(int i=0; i<group_size-1; i++)
+    {
+      int counter = tt_counter[i];
+      if(counter<tt_size_ar[i])
+      {
+        if(tt_matrix[i][counter].ts < ts)
+        {
+          ts = tt_matrix[i][counter].ts;
+        }
+      }
+    }
+    if(ts == MAX_TS)
+    {
+      quit_loop=1;
+    }
+    print_info("selected timestamp: %d", ts);
+    //fetch the elements from tt_matrix
+    print_info("Fetching elements from tt_matrix");
+    top_three ** selected_tt = malloc(sizeof(top_three*)*(group_size-1) );
+    int selected_tt_size = 0;
+    for(int i=0; i<group_size-1; i++)
+    {
+      int counter = tt_counter[i];
+      if(tt_matrix[i][counter].ts==ts && counter<tt_size_ar[i])
+      {
+        selected_tt[selected_tt_size]=&tt_matrix[i][counter];
+        selected_tt_size++;
+      }
+    }
+    print_info("selected_tt_size: %d", selected_tt_size);
+    //get the one with the best score among selected_tt
+    top_three * tt_winner = NULL;
+    if(selected_tt_size==1)
+    {
+      tt_winner = selected_tt[0];
+    }
+    else
+    if(selected_tt_size>1)
+    {
+      tt_winner = selected_tt[0];
+      for(int i=1; i<group_size-1; i++)
+      {
+        int counter = tt_counter[i];
+        int cmp_result = compare_top_three_score(tt_winner,tt_matrix[i]+counter);
+        if(cmp_result<0)
+        {
+          tt_winner = tt_matrix[i]+counter;
+        }
+      }
+    }
+    free(selected_tt);
+    if(tt_winner!=NULL)
+    {
+      print_info("tt_winner:");
+      print_top_three(tt_winner);
+      print_info("last_tt:");
+      print_top_three(last_tt);
+      print_info("Comparing tt_winner and last_tt");
+      //if it's major or if it's different than the old one update
+      if(compare_top_three_without_timestamp(tt_winner, last_tt)!=0)
+      {
+        if(compare_top_three_score(tt_winner,last_tt)>0)
+        {
+          print_info("writing tt_winner to file");
+          char * output_line = to_string_tuple_top_three(tt_winner);
+          print_info("returned string %s", output_line);
+          fprintf(out_fp, "%s\n", output_line);
+          print_info("wrote tt_winner to file");
+          free(output_line);
+        }
+        last_tt=tt_winner;
+      }
+    }
+    //update counters
+    for(int i=0; i<group_size-1; i++)
+    {
+      int counter = tt_counter[i];
+      if(tt_matrix[i][counter].ts<=ts)
+      {
+        tt_counter[i]=tt_counter[i]+1;
+      }
+    }
+    quit_loop = check_quit_loop(quit_loop, tt_counter, tt_size_ar, group_size-1);
+  }
+  free(tt_counter);
+  fclose(out_fp);
+  for(int node_id=1; node_id<group_size; node_id++)
+  {
+    free(tt_matrix[node_id-1]);
+  }
+  free(tt_matrix);
+  free(tt_size_ar);
 }

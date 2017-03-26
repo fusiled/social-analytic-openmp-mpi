@@ -57,6 +57,7 @@ int main(int argc, char *argv[])
   }
   else
   {
+    set_debug_level(3);
     ret_val = worker_execution(argc, argv, rank, mpi_top_three);
   }
   MPI_Type_free(&mpi_top_three);

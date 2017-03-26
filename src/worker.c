@@ -15,6 +15,8 @@
 extern const int MPI_MASTER;
 extern const int POST_NUMBER_TAG;
 extern const int POST_EXCHANGE_TAG;
+extern const int TOP_THREE_NUMBER_TAG;
+extern const int TOP_THREE_TRANSMISSION_TAG;
 
 
 //receive a post from MPI_MASTER and return the associated post_block
@@ -92,8 +94,16 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
 	free(n_posts);
-	print_msg("STOP SIGNAL", "Worker %d received the stop signal for post trasmission", worker_id);
+	print_info("Worker %d received the stop signal for post trasmission", worker_id);
 	//compute top3
-	
+	long pid[]={1,2,3};
+	long uid[]={4,5,6};
+	int score[]={10,20,30};
+	int nc[]={7,8,9};
+	top_three * top_three_ar = new_top_three(worker_id,pid,uid,score,nc);
+	int top_three_ar_size = 1;
+	print_info("Worker %d is sending its top_three", worker_id);
+	MPI_Send(&top_three_ar_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
+	MPI_Send(top_three_ar,top_three_ar_size,mpi_top_three,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
 	return 0;
 }
