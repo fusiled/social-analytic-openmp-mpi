@@ -7,10 +7,19 @@
 #include "post_block.h"
 #include "top_three.h"
 
+#include "process_events.h"
+
+#include "event_generator.h"
+#include "event_list.h"
+
+
 #include <stdlib.h>
 
 #include <mpi.h>
 #include <omp.h>
+
+
+#define MAX_EVENT_KEEPER_SIZE 2048
 
 extern const int MPI_MASTER;
 extern const int POST_NUMBER_TAG;
@@ -21,6 +30,8 @@ extern const int TOP_THREE_TRANSMISSION_TAG;
 
 //receive a post from MPI_MASTER and return the associated post_block
 post_block * receive_post(int worker_id);
+
+void resize_event_keeper(valued_event **** event_keeper, int ** event_keeper_dim, int event_keeper_size);
 
 post_block * receive_post(int worker_id)
 {
@@ -64,6 +75,9 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	//wait for job reception. If i receive a negative number then i can stop to
 	// listen
 	int * n_posts = malloc(sizeof(int));
+	valued_event *** main_event_keeper = malloc(sizeof(valued_event **)*MAX_EVENT_KEEPER_SIZE );
+	int * main_event_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
+	int main_event_keeper_size=0;
 	print_info("Worker %d is waiting for n_posts...", worker_id);
 	MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	while(*n_posts>=0)
@@ -76,25 +90,59 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 			pb_ar[i] = receive_post(worker_id);
 			//print_info("---->Worker %d Received post_block of post %ld",worker_id,  pb->post_id );
 		}
-		#pragma omp parallel shared(worker_id)
+		#pragma omp parallel shared(worker_id,main_event_keeper,main_event_keeper_size,main_event_keeper_dim)
 	    #pragma omp single nowait 
 	    {
 	    	#pragma omp task
 	    	{
-	      		//compute trace or do something
+	    			    		
+	    		int v_event_size;
+	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
+	    		
+	    		//free post_block array
+				for(int i=0; i<*n_posts; i++)
+				{
+					del_post_block(pb_ar[i]);
+				}
+				free(pb_ar);
+
+	      		//add valued_events array to the main_event_keeper
+	      		#pragma omp critical 
+      			{
+      				main_event_keeper[main_event_keeper_size] = v_event_array;
+      				main_event_keeper_dim[main_event_keeper_size] = v_event_size;
+      				main_event_keeper_size++;
+      			}
 	    	}
 	    }
-		//free post blocks and the array of pointers
-		for(int i=0; i<*n_posts; i++)
-		{
-			del_post_block(pb_ar[i]);
-		}
-		free(pb_ar);
 		print_info("Worker %d is waiting for n_posts...", worker_id);
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
+	#pragma omp barrier
 	free(n_posts);
-	print_info("Worker %d received the stop signal for post trasmission", worker_id);
+	print_info("Worker %d received the stop signal for post trasmission. main_event_keeper_size: %d", worker_id, main_event_keeper_size);
+	//resize keeper stuff
+	resize_event_keeper(&main_event_keeper,&main_event_keeper_dim,main_event_keeper_size);
+	/*for(int i=0; i<main_event_keeper_size; i++)
+	{
+		print_msg("NEXT","iter--------------------");
+		for(int j=0;j<main_event_keeper_dim[i];j++)
+		{
+			print_valued_event(main_event_keeper[i][j]);
+		}
+	}*/
+	//TODO compute top_three
+	//free main_event_keeper stuff
+	for(int i=0; i<main_event_keeper_size; i++)
+	{
+		for(int j=0; j<main_event_keeper_dim[i];j++)
+		{
+			clear_valued_event(main_event_keeper[i][j]);
+		}
+	}
+	free(main_event_keeper);
+	free(main_event_keeper_dim);
+
 	//compute top3
 	long pid[]={1,2,3};
 	long uid[]={4,5,6};
@@ -106,4 +154,42 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	MPI_Send(&top_three_ar_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
 	MPI_Send(top_three_ar,top_three_ar_size,mpi_top_three,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
 	return 0;
+}
+
+
+
+void resize_event_keeper(valued_event **** event_keeper, int ** event_keeper_dim, int event_keeper_size)
+{
+	//free space
+	if(event_keeper_size==0)
+	{
+		//free unused space as soon as we can. To avoid errors on future free 
+		//also set the returning pointers to null
+		free(*event_keeper);
+		free(*event_keeper_dim);
+		*event_keeper=NULL;
+		*event_keeper_dim=NULL;
+	}
+	//else resize
+	else if(event_keeper_size>0)
+	{
+		valued_event *** keeper_buffer = realloc(*event_keeper,sizeof(valued_event**)*event_keeper_size);
+		if(keeper_buffer==NULL)
+		{
+			print_warning("Error in main_event_keeper resizing. Keeping the old one");
+		}
+		else
+		{
+			*event_keeper = keeper_buffer;
+		}
+		int * keeper_dim_buffer = realloc(*event_keeper_dim,sizeof(int)*event_keeper_size);
+		if(keeper_dim_buffer==NULL)
+		{
+			print_warning("Error in main_event_keeper_dim resizing. Keeping the old one");
+		}
+		else
+		{
+			*event_keeper_dim = keeper_dim_buffer;
+		}
+	}	
 }

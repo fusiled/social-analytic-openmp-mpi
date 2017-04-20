@@ -21,7 +21,7 @@
 
 #define MAX_OUTPUT_NAME_SIZE 256
 
-#define BUCKET_SIZE 1000000
+#define BUCKET_SIZE 100000
 // the number of post in the big dataset is 3594403
 
 //from reply_type.h
@@ -82,6 +82,7 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(argv[3]),"%d",seconds);
   strcat(output_file_name, "_");
   strcat(output_file_name, buffer);
+  print_msg("BUCKET_SIZE", "%d", BUCKET_SIZE);
   print_msg("OUTPUT","The output will be saved at file %s", output_file_name);
   //init pclh
   pclh = kh_init(post_comment_list_hashmap); //pclh[post_id] -> comment_list
