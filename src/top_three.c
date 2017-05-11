@@ -35,6 +35,10 @@ void del_top_three(top_three * tt)
 //itoa and itol are in utils.h
 void print_top_three(top_three * tt)
 {
+	if(tt->ts==0)
+	{
+		print_error("TOP_THREE WITH TIMESTAMP = 0 !!!!! ------------------------------------------");
+	}
 	if(tt==NULL)
 	{
 		print_warning("Passed NULL to print_top_three");
@@ -63,7 +67,7 @@ void print_top_three(top_three * tt)
 		itoa(tt->n_commenters[i],buf);
 		strcat(output,buf);
 	}
-	print_msg("TOP 3", output);
+	print_msg("TOP 3", "%s", output);
 }
 
 char * to_string_tuple_top_three(top_three * tt)

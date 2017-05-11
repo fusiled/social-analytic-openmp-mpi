@@ -28,7 +28,10 @@ post_block * new_post_block(int post_ts, long post_id, long user_id,
 
 void del_post_block(post_block * pb)
 {
+	//print_info("free post_block");
 	free(pb->comment_ts);
+	//print_info("freed comment_ts");
 	free(pb->comment_user_id);
+	//print_info("freed comment_user_id");
 	free(pb);
 }

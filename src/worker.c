@@ -13,6 +13,11 @@
 #include "event_list.h"
 
 
+#include "parse_events.h"
+
+#include "top_three_merge.h"
+
+
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -31,7 +36,7 @@ extern const int TOP_THREE_TRANSMISSION_TAG;
 //receive a post from MPI_MASTER and return the associated post_block
 post_block * receive_post(int worker_id);
 
-void resize_event_keeper(valued_event **** event_keeper, int ** event_keeper_dim, int event_keeper_size);
+void resize_keeper(top_three **** keeper, int ** keeper_dim, int keeper_size);
 
 post_block * receive_post(int worker_id)
 {
@@ -75,9 +80,9 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	//wait for job reception. If i receive a negative number then i can stop to
 	// listen
 	int * n_posts = malloc(sizeof(int));
-	valued_event *** main_event_keeper = malloc(sizeof(valued_event **)*MAX_EVENT_KEEPER_SIZE );
-	int * main_event_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
-	int main_event_keeper_size=0;
+	top_three *** main_keeper = malloc(sizeof(top_three **)*MAX_EVENT_KEEPER_SIZE );
+	int * main_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
+	int main_keeper_size=0;
 	print_info("Worker %d is waiting for n_posts...", worker_id);
 	MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	while(*n_posts>=0)
@@ -90,28 +95,42 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 			pb_ar[i] = receive_post(worker_id);
 			//print_info("---->Worker %d Received post_block of post %ld",worker_id,  pb->post_id );
 		}
-		#pragma omp parallel shared(worker_id,main_event_keeper,main_event_keeper_size,main_event_keeper_dim)
+		#pragma omp parallel shared(worker_id,main_keeper,main_keeper_size,main_keeper_dim)
 	    #pragma omp single nowait 
 	    {
 	    	#pragma omp task
 	    	{
-	    			    		
+	    		int t_num = omp_get_thread_num();		    		
 	    		int v_event_size;
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
-	    		
+	    		print_fine("(%d,%d) processed a post_block batch", worker_id, t_num);
 	    		//free post_block array
 				for(int i=0; i<*n_posts; i++)
 				{
 					del_post_block(pb_ar[i]);
 				}
 				free(pb_ar);
+				//compute top_three for current v_event_array
+				int output_top_three_size;
+				top_three ** output_top_three = parse_events(v_event_array, v_event_size, &output_top_three_size);
+				//valued events now are useless. Free space!
+				for(int i=0; i<v_event_size;i++)
+				{
+					clear_valued_event(v_event_array[i]);
+				}
+				free(v_event_array);
 
-	      		//add valued_events array to the main_event_keeper
+				/*for(int i=0; i<output_top_three_size;i++)
+				{
+					print_top_three(output_top_three[i]);
+				}*/
+	      		//add output_top_three array to the main_keeper
 	      		#pragma omp critical 
       			{
-      				main_event_keeper[main_event_keeper_size] = v_event_array;
-      				main_event_keeper_dim[main_event_keeper_size] = v_event_size;
-      				main_event_keeper_size++;
+      				main_keeper[main_keeper_size] = output_top_three;
+      				main_keeper_dim[main_keeper_size] = output_top_three_size;
+					print_fine("(%d,%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, t_num, main_keeper_size);
+      				main_keeper_size++;
       			}
 	    	}
 	    }
@@ -120,76 +139,89 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	}
 	#pragma omp barrier
 	free(n_posts);
-	print_info("Worker %d received the stop signal for post trasmission. main_event_keeper_size: %d", worker_id, main_event_keeper_size);
+	print_info("Worker %d received the stop signal for post trasmission. main_keeper_size: %d", worker_id, main_keeper_size);
 	//resize keeper stuff
-	resize_event_keeper(&main_event_keeper,&main_event_keeper_dim,main_event_keeper_size);
-	/*for(int i=0; i<main_event_keeper_size; i++)
+	resize_keeper(&main_keeper,&main_keeper_dim,main_keeper_size);
+	
+	for(int i=0; i<main_keeper_size;i++)
 	{
-		print_msg("NEXT","iter--------------------");
-		for(int j=0;j<main_event_keeper_dim[i];j++)
+		for(int j=0; j<main_keeper_dim[i];j++)
 		{
-			print_valued_event(main_event_keeper[i][j]);
-		}
-	}*/
-	//TODO compute top_three
-	//free main_event_keeper stuff
-	for(int i=0; i<main_event_keeper_size; i++)
-	{
-		for(int j=0; j<main_event_keeper_dim[i];j++)
-		{
-			clear_valued_event(main_event_keeper[i][j]);
+			print_top_three(main_keeper[i][j]);
 		}
 	}
-	free(main_event_keeper);
-	free(main_event_keeper_dim);
 
+	//TODO compute top_three
+	//use parse events on single entries of main_keeper, then reuse the 
+	//code in output_producer to merge the top_three. Then send everything to master
+	int out_size=0;
+	print_info("main_keeper_size: %d", main_keeper_size);
+	top_three * out_ar = top_three_merge(main_keeper,main_keeper_dim,main_keeper_size,&out_size);
+	/*for(int i=0; i<out_size;i++)
+	{
+		print_top_three(out_ar+i);
+	}
 	//compute top3
-	long pid[]={1,2,3};
+	/*long pid[]={1,2,3};
 	long uid[]={4,5,6};
 	int score[]={10,20,30};
 	int nc[]={7,8,9};
 	top_three * top_three_ar = new_top_three(worker_id,pid,uid,score,nc);
-	int top_three_ar_size = 1;
+	int top_three_ar_size = 1;*/
+	//top_three * out_ar = NULL;
 	print_info("Worker %d is sending its top_three", worker_id);
-	MPI_Send(&top_three_ar_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
-	MPI_Send(top_three_ar,top_three_ar_size,mpi_top_three,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+	MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
+	MPI_Send(out_ar,out_size,mpi_top_three,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+
+	//FINAL CLEANUP
+	//free main_keeper stuff
+	for(int i=0; i<main_keeper_size; i++)
+	{
+		for(int j=0; j<main_keeper_dim[i];j++)
+		{
+			del_top_three(main_keeper[i][j]);
+		}
+	}
+	free(main_keeper);
+	free(main_keeper_dim);
+
 	return 0;
 }
 
 
 
-void resize_event_keeper(valued_event **** event_keeper, int ** event_keeper_dim, int event_keeper_size)
+void resize_keeper(top_three **** keeper, int ** keeper_dim, int keeper_size)
 {
 	//free space
-	if(event_keeper_size==0)
+	if(keeper_size==0)
 	{
 		//free unused space as soon as we can. To avoid errors on future free 
 		//also set the returning pointers to null
-		free(*event_keeper);
-		free(*event_keeper_dim);
-		*event_keeper=NULL;
-		*event_keeper_dim=NULL;
+		free(*keeper);
+		free(*keeper_dim);
+		*keeper=NULL;
+		*keeper_dim=NULL;
 	}
 	//else resize
-	else if(event_keeper_size>0)
+	else if(keeper_size>0)
 	{
-		valued_event *** keeper_buffer = realloc(*event_keeper,sizeof(valued_event**)*event_keeper_size);
+		top_three *** keeper_buffer = realloc(*keeper,sizeof(top_three**)*keeper_size);
 		if(keeper_buffer==NULL)
 		{
-			print_warning("Error in main_event_keeper resizing. Keeping the old one");
+			print_warning("Error in main_keeper resizing. Keeping the old one");
 		}
 		else
 		{
-			*event_keeper = keeper_buffer;
+			*keeper = keeper_buffer;
 		}
-		int * keeper_dim_buffer = realloc(*event_keeper_dim,sizeof(int)*event_keeper_size);
+		int * keeper_dim_buffer = realloc(*keeper_dim,sizeof(int)*keeper_size);
 		if(keeper_dim_buffer==NULL)
 		{
-			print_warning("Error in main_event_keeper_dim resizing. Keeping the old one");
+			print_warning("Error in main_keeper_dim resizing. Keeping the old one");
 		}
 		else
 		{
-			*event_keeper_dim = keeper_dim_buffer;
+			*keeper_dim = keeper_dim_buffer;
 		}
 	}	
 }

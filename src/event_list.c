@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-valued_event_list_element* create_element(int post_ts, long post_id, int score, valued_event_list_element* next);
+valued_event_list_element* create_event_list_element(int post_ts, long post_id, int score, valued_event_list_element* next);
 
 void destroy_element(valued_event_list_element* el);
 
@@ -22,7 +22,7 @@ event_list* create_event_list()
 
 void add_element(event_list* list, int post_ts, long post_id, int score)
 {
-    valued_event_list_element* el = create_element(post_ts, post_id, score, list->head);
+    valued_event_list_element* el = create_event_list_element(post_ts, post_id, score, list->head);
     if (el==NULL)
     {
         print_error("Cannot allocate a list element");
@@ -72,7 +72,7 @@ void clear_valued_event(valued_event* ve)
     free(ve);
 }
 
-valued_event_list_element* create_element(int post_ts, long post_id, int score, valued_event_list_element* next)
+valued_event_list_element* create_event_list_element(int post_ts, long post_id, int score, valued_event_list_element* next)
 {
     valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
     if (el==NULL)

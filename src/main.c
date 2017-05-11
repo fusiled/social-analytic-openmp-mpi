@@ -53,11 +53,12 @@ int main(int argc, char *argv[])
   int * n_threads_array =  get_n_threads_foreach_node(rank);
   if(rank==MPI_MASTER)
   {
+    set_debug_level(3);
     ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_top_three);
   }
   else
   {
-    //set_debug_level(0);
+    set_debug_level(0);
     ret_val = worker_execution(argc, argv, rank, mpi_top_three);
   }
   MPI_Type_free(&mpi_top_three);
