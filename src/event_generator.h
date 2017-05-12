@@ -13,6 +13,7 @@ typedef struct event
 {
     int timestamp;
     //post_block * post;
+    long user_id;
     long post_id;
     char is_comment;
     int type;
@@ -28,7 +29,7 @@ event ** generate_events(post_block * post, int* event_size);
 event ** sort_generated_events(event ** e, int size);
 
 //create a new event with the specified arguments
-event* create_event(long post_id, int ts, char type, char is_comment);
+event* create_event(long post_id, int ts,long user_id, char type, char is_comment);
 
 //print event to stdout
 event * print_event(event * event);

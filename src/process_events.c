@@ -28,7 +28,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size, eve
             {
                 break;
             }
-            add_element(e_list,ee[j]->timestamp, ee[j]->post_id, score);
+            add_element(e_list,ee[j]->timestamp, ee[j]->post_id, ee[j]->user_id,score);
         }
     }
     // Return the array after deleting the list
