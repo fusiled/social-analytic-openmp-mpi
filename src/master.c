@@ -94,6 +94,7 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
+  print_info("Master entering in output file phase");
   produce_output_file(output_file_name, group_size, mpi_top_three);
   
   free(n_threads_array);

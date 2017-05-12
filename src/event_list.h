@@ -23,9 +23,9 @@ typedef struct event_list
 // Create an empty list
 event_list* create_event_list();
 
-void add_element(event_list* list, int post_ts, long post_id, int score);
+void clear_event_list(event_list * e_list);
 
-void clear_valued_event_list(event_list* list);
+void add_element(event_list* list, int post_ts, long post_id, int score);
 
 valued_event** get_sorted_array(event_list* list);
 

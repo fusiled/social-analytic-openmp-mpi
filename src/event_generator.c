@@ -10,7 +10,7 @@ event ** generate_events(post_block * post, int* event_size)
 {
    // We have to create 10 events per each post and comment (where 10 is the
    //value assigned at the creation --> it can be modified trhough the apposite define)
-   int size = post->comment_ar_size+1;
+   int size = (post->comment_ar_size)+1;
    long post_id = post->post_id;
    event ** events = malloc(sizeof(event*)*(CREATION+1)*size);
    if (events == NULL)
@@ -49,7 +49,7 @@ event ** sort_generated_events(event ** e, int size)
 }
 
 event* create_event(long post_id, int ts, char type, char is_comment) {
-    event* e = malloc(sizeof(event*));
+    event* e = malloc(sizeof(event));
     if (e==NULL)
     {
         print_error("Cannot create event");

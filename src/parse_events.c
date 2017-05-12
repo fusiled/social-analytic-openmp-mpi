@@ -22,8 +22,9 @@ top_three* create_top_three(valued_event** ve, int ts);
 
 top_three ** parse_events(valued_event** events_array, int size, int* out_size)
 {
+    print_fine("v_event_size: %d", size);
     // Initially the top three is empty
-    valued_event** tt_current_top = calloc(sizeof(valued_event*),NUM_TOP_POSTS);
+    valued_event** tt_current_top = malloc(sizeof(valued_event*)*NUM_TOP_POSTS);
     if (tt_current_top == NULL)
     {
         print_error("Cannot allocate a top three array to parse the events and generate the history of the top-threes");
@@ -31,12 +32,14 @@ top_three ** parse_events(valued_event** events_array, int size, int* out_size)
     }
     // Create a list of top_three
     top_three_list* list = create_top_three_list();
+    print_fine("created top three list");
     if (list == NULL)
     {
         print_error("Cannot allocate the list of top three.");
         free(tt_current_top);
         return NULL;
     }
+    print_fine("pre for. addr events_array at: %p. ref to events_array %p", &events_array, events_array);
     for (int i=0; i < size; i++)
     {
         // Save the current timestamp
@@ -55,8 +58,8 @@ top_three ** parse_events(valued_event** events_array, int size, int* out_size)
             }
         }
     }
-    print_fine("post check_change phase. passing to get_top_three_array phase...");
     // Return the array
+    print_fine("finished building the list. making it into an array");
     return get_top_three_array(list, out_size);
 }
 
@@ -153,16 +156,14 @@ int check_change(valued_event** array, valued_event* ve)
     return 0;*/
     int old_pos = -1, new_pos;
     // First check if the event's post is already present into the top-X
-    //print_fine("Calling check_change");
     for (int i=0; i<NUM_TOP_POSTS; i++)
     {
-        if (array[i]!=NULL && ve->post_id == array[i]->post_id)
+        if (array[i]!=NULL && ve!=NULL &&  ve->post_id == array[i]->post_id)
         {
-            //print_fine("post_id %ld is present in the current list", ve->post_id);
+            //print_fine("left shifting");
             old_pos = i;
             array[i] = NULL;
             // Left-shift the other elements.
-            //print_fine("left shifting elements");
             for (int j=i, flag=1; flag && j<NUM_TOP_POSTS-1;j++)
             {
                 if (array[j+1] != NULL)
@@ -179,12 +180,12 @@ int check_change(valued_event** array, valued_event* ve)
             array[NUM_TOP_POSTS-1] = NULL;
         }
     }
-    //print_fine("inserting the new element %ld", ve->post_id);
     // Now insert the new event.
     for (int i=0, notDone=1; notDone && i<NUM_TOP_POSTS; i++)
     {
-        if ( array[i]==NULL || ve->score > array[i]->score)
+        if (array[i]==NULL ||  ve->score > array[i]->score )
         {
+            //print_fine("right shifting");
             new_pos = i;
             // Right-shift the other elements.
             for (int j=NUM_TOP_POSTS - 1; j>i; j--)
@@ -207,7 +208,6 @@ int check_change(valued_event** array, valued_event* ve)
 // Create the top-three
 top_three* create_top_three(valued_event** ve, int ts)
 {
-    //print_fine("create_top_three call with value event");
     // Define the arrays
     long post_id[TOP_NUMBER], user_id[TOP_NUMBER];
     int post_score[TOP_NUMBER], n_commenters[TOP_NUMBER];
@@ -228,6 +228,5 @@ top_three* create_top_three(valued_event** ve, int ts)
         }
     }
     top_three* tt = new_top_three(ts, post_id, user_id, post_score, n_commenters);
-    //print_fine("SUCCESSfully returning from create_top_three call with value event");
     return tt;
 }

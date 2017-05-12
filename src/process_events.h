@@ -8,6 +8,6 @@
 #define COMMENT 10
 #define POST_DECREMENT -1
 
-valued_event** process_events(post_block** pb, int size, int * v_event_size);
+valued_event** process_events(post_block** pb, int size, int * v_event_size, event_list ** e_list_out);
 
 #endif

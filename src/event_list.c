@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-valued_event_list_element* create_event_list_element(int post_ts, long post_id, int score, valued_event_list_element* next);
+valued_event_list_element* create_valued_list_element(int post_ts, long post_id, int score, valued_event_list_element* next);
 
 void destroy_element(valued_event_list_element* el);
 
@@ -20,9 +20,21 @@ event_list* create_event_list()
     return list;
 }
 
+void clear_event_list(event_list * list)
+{
+    valued_event_list_element * tmp = list->head;
+    while(tmp!=NULL)
+    {  
+        valued_event_list_element * tmp2 = tmp->next;
+        free(tmp);
+        tmp=tmp2;
+    }
+    free(list);
+}
+
 void add_element(event_list* list, int post_ts, long post_id, int score)
 {
-    valued_event_list_element* el = create_event_list_element(post_ts, post_id, score, list->head);
+    valued_event_list_element* el = create_valued_list_element(post_ts, post_id, score, list->head);
     if (el==NULL)
     {
         print_error("Cannot allocate a list element");
@@ -30,17 +42,6 @@ void add_element(event_list* list, int post_ts, long post_id, int score)
     }
     list->size=list->size+1;
     list->head=el;
-}
-
-void clear_valued_event_list(event_list* list)
-{
-    while(list->head)
-    {
-        valued_event_list_element* tmp = (list->head)->next;
-        free(list->head);
-        list->head=tmp;
-    }
-    free(list);
 }
 
 valued_event** get_sorted_array(event_list* list)
@@ -72,16 +73,18 @@ void clear_valued_event(valued_event* ve)
     free(ve);
 }
 
-valued_event_list_element* create_event_list_element(int post_ts, long post_id, int score, valued_event_list_element* next)
+valued_event_list_element* create_valued_list_element(int post_ts, long post_id, int score, valued_event_list_element* next)
 {
     valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
     if (el==NULL)
     {
+        print_error("cannot malloc a valued_event_list_element");
         return NULL;
     }
     valued_event* vv = malloc(sizeof(valued_event));
     if (vv==NULL)
     {
+        print_error("cannoc malloc a valued_event");
         free(el);
         return NULL;
     }
@@ -89,15 +92,7 @@ valued_event_list_element* create_event_list_element(int post_ts, long post_id, 
     vv->post_id=post_id;
     vv->score=score;
     el->v=vv;
-    if (next==NULL)
-    {
-        el->next=NULL;
-    }
-    else
-    {
-        el->next=next;
-    }
-
+    el->next=next;
     return el;
 }
 
@@ -110,5 +105,5 @@ void destroy_element(valued_event_list_element* el)
 
 void print_valued_event(valued_event * ve)
 {
-    print_msg("VALUED_EL","post_ts: %d, post_id: %ld, score: %d", ve->post_ts,ve->post_id, ve->score);
+    print_msg("VALUED_EL","adr: %p, post_ts: %d, post_id: %ld, score: %d",ve, ve->post_ts,ve->post_id, ve->score);
 }

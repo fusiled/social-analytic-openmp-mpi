@@ -3,11 +3,15 @@
 #include "event_list.h"
 #include "event_generator.h"
 
+
+#include "debug_utils.h"
+
 void update_score(int* score, char action_type, char is_comment);
 
 
-valued_event** process_events(post_block** pb, int size, int * v_event_size)
+valued_event** process_events(post_block** pb, int size, int * v_event_size, event_list ** e_list_out)
 {
+    print_fine("processing events");
     // For each post block its events are generated and added to a list, then a sorted array is generated from the list
     // Create the list
     event_list* e_list = create_event_list();
@@ -30,7 +34,8 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
     // Return the array after deleting the list
     valued_event** ve = get_sorted_array(e_list);
     *v_event_size = e_list->size; 
-    clear_valued_event_list(e_list);
+    //clear_event_list(e_list);
+    *e_list_out=e_list;
     return ve;
 }
 

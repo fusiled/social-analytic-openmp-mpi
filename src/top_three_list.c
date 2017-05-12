@@ -5,7 +5,7 @@
 
 #include <stdlib.h>
 
-top_three_list_element* create_tt_list_element(top_three* tt);
+top_three_list_element* create_element(top_three* tt);
 
 // Create an empty list
 top_three_list* create_top_three_list()
@@ -23,7 +23,7 @@ top_three_list* create_top_three_list()
 
 void add_top_three_element(top_three_list* list, top_three* el)
 {
-    top_three_list_element* new_el = create_tt_list_element(el);
+    top_three_list_element* new_el = create_element(el);
     if (new_el == NULL)
     {
         print_error("Cannot allocate a top_three_list_element!");
@@ -82,7 +82,7 @@ top_three** get_top_three_array(top_three_list* list, int* size)
     return tt_array;
 }
 
-top_three_list_element* create_tt_list_element(top_three* tt)
+top_three_list_element* create_element(top_three* tt)
 {
     top_three_list_element* el = malloc(sizeof(top_three_list_element));
     if (el==NULL)
