@@ -10,16 +10,21 @@
 #   it substitute exploiting the 2 regexes all the elements of string_list
 
 
+#put source here
+SRC_DIR=src
+
 #source file EXCEPT MAIN FILES here
-SRC = utils.c global_variables.c reply_type.c post_block.c debug_utils.c comment.c comment_list.c post.c parser.c master.c worker.c main.c
+SRC = utils.c global_variables.c reply_type.c post_block.c debug_utils.c \
+      top_three.c comment.c comment_list.c post.c parser.c node_commons.c \
+      output_producer.c master.c worker.c main.c \
+      event_generator.c quicksort.c process_events.c event_list.c top_three_list.c \
+      parse_events.c
 #your compiler
 CC = mpicc
 
 #your flags
-CFLAGS= -g -fopenmp -D DEBUG -I/home/fusiled/uni/middleware/socialdata_small/src -D_GNU_SOURCE -D_XOPEN_SOURCE
+CFLAGS=  -fopenmp -I./$(SRC_DIR) -g -D_GNU_SOURCE -D_XOPEN_SOURCE
 
-#put source here
-SRC_DIR=src
 
 #executables will be saved here
 BIN_DIR=bin
@@ -58,7 +63,7 @@ $(OBJ_DIR):
 
 #remove all the object files
 clean:
-	rm $(OBJ_DIR)/*.o
+	rm -f $(OBJ_DIR)/*.o
 
 #clean and build
 full: clean all

@@ -28,8 +28,8 @@
 extern const int MPI_MASTER;
 extern const int POST_NUMBER_TAG;
 extern const int POST_EXCHANGE_TAG;
-extern const int TOP_THREE_NUMBER_TAG;
-extern const int TOP_THREE_TRANSMISSION_TAG;
+extern const int VALUED_EVENT_NUMBER_TAG;
+extern const int VALUED_EVENT_TRANSMISSION_TAG;
 
 
 //receive a post from MPI_MASTER and return the associated post_block
@@ -73,7 +73,7 @@ post_block * receive_post(int worker_id)
 }
 
 
-int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_top_three, MPI_Datatype mpi_valued_event)
+int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_valued_event)
 {
 	MPI_Status ret;
 	//wait for job reception. If i receive a negative number then i can stop to
@@ -95,10 +95,10 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 			//print_info("---->Worker %d Received post_block of post %ld",worker_id,  pb->post_id );
 		}
 		print_info("Worker %d received a post_block. Spawning task");
-		//#pragma omp parallel
-	    //#pragma omp single nowait 
+		#pragma omp parallel
+	    #pragma omp single nowait 
 	    {
-	    	//#pragma omp task  shared(worker_id)
+	    	#pragma omp task  shared(worker_id, main_keeper, main_keeper_dim, main_keeper_size)
 	    	{
 	    		int t_num = omp_get_thread_num();		    		
 	    		int v_event_size;
@@ -106,14 +106,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
 	    		print_fine("(%d,%d) processed a post_block batch", worker_id, t_num);
 				//compute top_three for current v_event_array
-				//valued events now are useless. Free space!
-
-				/*for(int i=0; i<output_top_three_size;i++)
-				{
-					print_top_three(output_top_three[i]);
-				}*/
-	      		//add output_top_three array to the main_keeper
-	      		//#pragma omp critical 
+	      		#pragma omp critical 
       			{
       				main_keeper[main_keeper_size] = v_event_array;
       				main_keeper_dim[main_keeper_size] = v_event_size;
@@ -130,7 +123,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 		print_info("Worker %d is waiting for n_posts...", worker_id);
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
-	//#pragma omp barrier
+	#pragma omp barrier
 	free(n_posts);
 	print_info("Worker %d received the stop signal for post trasmission. main_keeper_size: %d", worker_id, main_keeper_size);
 	
@@ -141,25 +134,31 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	{
 		print_error("cannot malloc out_ar");
 	}
-	print_info("Worker %d is sending its valued_events", worker_id);
-	MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
-	MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
-
-	//FINAL CLEANUP
-	print_info("freeing unused stuff");
-	free(out_ar);
-	print_info("freeing main keeper stuff");
-	//free main_keeper stuff
-	for(int i=0; i<main_keeper_size; i++)
+	#pragma omp parallel sections
 	{
-		for(int j=0; j<main_keeper_dim[i];j++)
+		#pragma omp section
 		{
-			clear_valued_event(main_keeper[i][j]);
+			print_info("Worker %d is sending its valued_events", worker_id);
+			MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
+			MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+			free(out_ar);
+		}
+		#pragma omp section
+		{
+			print_info("freeing main keeper stuff");
+			//free main_keeper stuff
+			for(int i=0; i<main_keeper_size; i++)
+			{
+				for(int j=0; j<main_keeper_dim[i];j++)
+				{
+					clear_valued_event(main_keeper[i][j]);
+				}
+			}
+			free(main_keeper);
+			free(main_keeper_dim);
 		}
 	}
-	free(main_keeper);
-	free(main_keeper_dim);
-	print_info("Worker %d terminating successfully (:");
+	print_info("Worker %d terminating successfully (:", worker_id);
 	return 0;
 }
 

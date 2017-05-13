@@ -29,27 +29,6 @@ int * get_n_threads_foreach_node(int rank)
   return n_threads_array;
 }
 
-
-MPI_Datatype register_mpi_top_three()
-{
-  int array_of_block_lengths []= {1, 3, 3, 3, 3};
-  MPI_Aint  array_of_displacements [5];
-  array_of_displacements[0]= offsetof(top_three, ts);
-  array_of_displacements[1]= offsetof(top_three, post_id);
-  array_of_displacements[2]= offsetof(top_three, user_id);
-  array_of_displacements[3]= offsetof(top_three, post_score);
-  array_of_displacements[4]= offsetof(top_three, n_commenters);
-  MPI_Datatype array_of_types  [] = {MPI_INT, MPI_LONG, MPI_LONG,MPI_INT, MPI_INT};
-  MPI_Datatype mpi_top_three;
-  int result = MPI_Type_create_struct(5,array_of_block_lengths,array_of_displacements,array_of_types, &mpi_top_three);
-  if(result!=MPI_SUCCESS)
-  {
-    print_error("Error in creating the struct");
-  }
-  MPI_Type_commit(&mpi_top_three);
-  return mpi_top_three;
-}
-
 /*int post_ts;
     long post_id;
     long user_id;

@@ -27,21 +27,23 @@ extern const int MPI_MASTER;
 
 void print_usage(char * exec_name)
 {
-  printf("%s post_file comment_file out_file\n", exec_name);
+  printf("%s bucket_size post_file comment_file out_file\n", exec_name);
 }
 
 
 int main(int argc, char *argv[])
 {
-  if(argc!=4)
+  if(argc!=5)
   {
     print_error("Wrong number of params!");
     print_usage(argv[0]);
     return -1;
   }
-  //MPI_Init (&argc,&argv);
   int provided;
-  //set_debug_level(3);
+  if(atoi(argv[1])<=0)
+  {
+    print_error("Invalid bucket size set to %d! ):", atoi(argv[1]) );
+  }
   MPI_Init_thread(&argc, &argv, MPI_THREAD_MULTIPLE, &provided);
   int rank;
   int ret_val;
@@ -49,20 +51,19 @@ int main(int argc, char *argv[])
   MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
   MPI_Comm_size(MPI_COMM_WORLD,&group_size); 
   //gather at the root the number of available threads foreach node
-  MPI_Datatype mpi_top_three = register_mpi_top_three();
   MPI_Datatype mpi_valued_event = register_mpi_valued_event();
   int * n_threads_array =  get_n_threads_foreach_node(rank);
+  set_debug_level(2);
   if(rank==MPI_MASTER)
   {
-    set_debug_level(0);
-    ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_top_three, mpi_valued_event);
+    //set_debug_level(0);
+    ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_valued_event);
   }
   else
   {
-    set_debug_level(10);
-    ret_val = worker_execution(argc, argv, rank, mpi_top_three, mpi_valued_event);
+   // set_debug_level(10);
+    ret_val = worker_execution(argc, argv, rank, mpi_valued_event);
   }
-  MPI_Type_free(&mpi_top_three);
   MPI_Type_free(&mpi_valued_event);
   MPI_Finalize();
   return ret_val;

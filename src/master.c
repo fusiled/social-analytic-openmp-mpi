@@ -21,7 +21,6 @@
 
 #define MAX_OUTPUT_NAME_SIZE 256
 
-#define BUCKET_SIZE 100000
 // the number of post in the big dataset is 3594403
 
 //from reply_type.h
@@ -52,8 +51,8 @@ void build_post_to_comment_list_hashmap(char * path_to_comment_file);
 void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int node_id);
 
 
-//process to post file and send block of posts (at most big BUCKET_SIZE) to the workers
-void process_posts_and_transmit(char * path_to_post_file, int group_size);
+//process to post file and send block of posts (at most big bucket_size) to the workers
+void process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size);
 
 
 //update the node_id. This is used to decide to who send a bucket of posts.
@@ -70,37 +69,52 @@ int update_node_id(int node_id, int group_size)
     return node_id;
 }
 
-int master_execution(int argc, char * argv[], int group_size, int * n_threads_array, MPI_Datatype mpi_top_three, MPI_Datatype mpi_valued_event)
+
+char * build_output_file_name( char * out_prefix, int group_size)
 {
-  //argv[2] is the path to the comment file
-  //argv[1] is the path to the post file
   time_t seconds = time(NULL);
-  char output_file_name [ MAX_OUTPUT_NAME_SIZE ];
+  char * output_file_name = malloc(sizeof(char)*MAX_OUTPUT_NAME_SIZE);
   char buffer [ MAX_OUTPUT_NAME_SIZE ];
   output_file_name[0]='\0';
-  strcat(output_file_name,argv[3]);
+  strcat(output_file_name,out_prefix);
   strcat(output_file_name, "_");
   snprintf(buffer,sizeof(char)*3,"%d",group_size);
   strcat(output_file_name,buffer);
   strcat(output_file_name, "_");
-  snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(argv[3]),"%d",seconds);
+  snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(out_prefix),"%d",seconds);
   strcat(output_file_name, buffer);
-  print_msg("BUCKET_SIZE", "%d", BUCKET_SIZE);
+  return output_file_name;
+}
+
+int master_execution(int argc, char * argv[], int group_size, int * n_threads_array,MPI_Datatype mpi_valued_event)
+{
+  //argv[3] is the prefix where the output will generated
+  //argv[2] is the path to the comment file
+  //argv[1] is the path to the post file
+  int bucket_size = atoi(argv[1]);
+  if(bucket_size<0)
+  {
+    print_error("Invalid bucket_size set to %d. Quitting...", bucket_size);
+    return -1;
+  }
+  print_msg("BUCKET_SIZE", "%d", bucket_size);
+  char * output_file_name = build_output_file_name(argv[4], group_size);
   print_msg("OUTPUT","The output will be saved at file %s", output_file_name);
   //init pclh
   pclh = kh_init(post_comment_list_hashmap); //pclh[post_id] -> comment_list
 
-  build_post_to_comment_list_hashmap(argv[2]);
+  build_post_to_comment_list_hashmap(argv[3]);
 
-  process_posts_and_transmit(argv[1], group_size);
+  process_posts_and_transmit(argv[2], group_size, bucket_size);
 
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
   print_info("Master entering in output file phase");
-  //produce_output_file(output_file_name, group_size, mpi_top_three);
-  produce_output_file_event_variant(output_file_name,group_size,mpi_valued_event);
+  produce_output_file(output_file_name,group_size,mpi_valued_event);
   free(n_threads_array);
+  free(output_file_name);
+  print_info("Master is terminating successfully (:");
   return 0;
 }
 
@@ -245,12 +259,12 @@ void build_post_to_comment_list_hashmap(char * path_to_comment_file)
 }
 
 
-void process_posts_and_transmit(char * path_to_post_file, int group_size)
+void process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size)
 {
   FILE * post_fp = fopen(path_to_post_file,"r");
   int * read_lines;
   read_lines = malloc(sizeof(int));
-  post * post_ar = parse_post(post_fp,BUCKET_SIZE, read_lines);
+  post * post_ar = parse_post(post_fp,bucket_size, read_lines);
   int node_id=0;
   while(post_ar!=NULL)
   {
@@ -258,7 +272,7 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size)
     transmit_post_block_array_to_node(post_ar, read_lines, node_id);
     //print_info("Post_ar ref is %p", post_ar);
     del_post(post_ar);
-    post_ar = parse_post(post_fp,BUCKET_SIZE, read_lines); 
+    post_ar = parse_post(post_fp,bucket_size, read_lines); 
   }
   free(read_lines);
   fclose(post_fp);
