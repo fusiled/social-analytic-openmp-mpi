@@ -13,18 +13,20 @@
 #define NUM_TOP_POSTS 25
 
 // Add an event into the array at pos (the remaining values are right-shifted)
-void add_event_to_the_array(valued_event** array, valued_event* el, int pos);
+void add_event_to_the_array(valued_event* array, valued_event* el, int pos);
 // Check if the event ve changes the top-three. If yes, the top-three is updated
 // and 1 is returned. Otherwise, the function returns 0 (false).
-int check_change(valued_event** array, valued_event* ve);
+int check_change(valued_event** array, valued_event* ve, int * array_size);
 // Create the top-three
 top_three* create_top_three(valued_event** ve, int ts);
 
-top_three ** parse_events(valued_event** events_array, int size, int* out_size)
+top_three ** parse_events(valued_event* events_array, int size, int* out_size)
 {
+    print_warning("parsing events");
     print_fine("v_event_size: %d", size);
     // Initially the top three is empty
-    valued_event** tt_current_top = malloc(sizeof(valued_event*)*NUM_TOP_POSTS);
+    valued_event** tt_current_top = calloc(sizeof(valued_event*),NUM_TOP_POSTS);
+    int array_size=0;
     if (tt_current_top == NULL)
     {
         print_error("Cannot allocate a top three array to parse the events and generate the history of the top-threes");
@@ -32,19 +34,16 @@ top_three ** parse_events(valued_event** events_array, int size, int* out_size)
     }
     // Create a list of top_three
     top_three_list* list = create_top_three_list();
-    print_fine("created top three list");
     if (list == NULL)
     {
-        print_error("Cannot allocate the list of top three.");
         free(tt_current_top);
         return NULL;
     }
-    print_fine("pre for. addr events_array at: %p. ref to events_array %p", &events_array, events_array);
     for (int i=0; i < size; i++)
     {
         // Save the current timestamp
-        int ts = events_array[i]->post_ts;
-        if (check_change(tt_current_top,events_array[i]))
+        int ts = events_array[i].post_ts;
+        if (check_change(tt_current_top,events_array+i, &array_size))
         {
             // Add the new top_three to the list
             top_three* tt = create_top_three(tt_current_top, ts);
@@ -64,29 +63,26 @@ top_three ** parse_events(valued_event** events_array, int size, int* out_size)
 }
 
 // Add an event into the array at pos (the remaining values are right-shifted)
-void add_event_to_the_array(valued_event** array, valued_event* el, int pos)
+void add_event_to_the_array(valued_event* array, valued_event* el, int pos)
 {
     // Case 1: pos equal to TOP_NUMBER-1: Simply insert the event
     if (pos == NUM_TOP_POSTS-1)
     {
-        array[NUM_TOP_POSTS-1] = el;
+        array[NUM_TOP_POSTS-1] = *el;
         return;
     }
     // Other case: we have to shift the other elements
     for (int i=NUM_TOP_POSTS-1; i>pos; i--)
     {
-        if (!(array[i-1]==NULL))
-        {
-            array[i] = array[i-1];
-        }
+        array[i] = array[i-1];
     }
     // Insert the element
-    array[pos] = el;
+    array[pos] = *el;
 }
 
 // Check if the event ve changes the top-three. If yes, the top-three is updated
 // and 1 is returned. Otherwise, the function returns 0 (false).
-int check_change(valued_event** array, valued_event* ve)
+int check_change(valued_event** array, valued_event* ve, int * array_size)
 {
     /*for (int i=0; i<NUM_TOP_POSTS; i++)
     {
@@ -154,13 +150,19 @@ int check_change(valued_event** array, valued_event* ve)
     }
     // No changes case.
     return 0;*/
+    if(*array_size==0)
+    {
+        array[0]=ve;
+        *array_size=1;
+        return 1;
+    }
     int old_pos = -1, new_pos;
     // First check if the event's post is already present into the top-X
     for (int i=0; i<NUM_TOP_POSTS; i++)
     {
-        if (array[i]!=NULL && ve!=NULL &&  ve->post_id == array[i]->post_id)
+        //print_fine("array[%d]:", i);
+        if (array[i]!=NULL &&  ve->post_id == array[i]->post_id)
         {
-            //print_fine("left shifting");
             old_pos = i;
             array[i] = NULL;
             // Left-shift the other elements.
@@ -202,6 +204,10 @@ int check_change(valued_event** array, valued_event* ve)
         }
     }
     // Check if there was a change in the top-3
+    if(old_pos >= 0 && old_pos != new_pos && old_pos < TOP_NUMBER)
+    {
+        *array_size=*array_size+1;
+    }
     return (old_pos >= 0 && old_pos != new_pos && old_pos < TOP_NUMBER);
 }
 
@@ -213,18 +219,20 @@ top_three* create_top_three(valued_event** ve, int ts)
     int post_score[TOP_NUMBER], n_commenters[TOP_NUMBER];
     for(int i=0; i<TOP_NUMBER; i++)
     {
-        // Now the user_id and the n_commenters are empty
-        user_id[i] = ve[i]->user_id;
-        n_commenters[i] = ve[i]->n_commenters;
         if (!(ve[i]==NULL))
         {
             post_id[i] = ve[i]->post_id;
             post_score[i] = ve[i]->score;
+            // Now the user_id and the n_commenters are empty
+            user_id[i] = ve[i]->user_id;
+            n_commenters[i] = ve[i]->n_commenters;
         }
         else
         {
             post_id[i] = EMPTY_VALUE;
             post_score[i] = EMPTY_VALUE;
+            user_id[i] = EMPTY_VALUE;
+            n_commenters[i] = EMPTY_VALUE;
         }
     }
     top_three* tt = new_top_three(ts, post_id, user_id, post_score, n_commenters);

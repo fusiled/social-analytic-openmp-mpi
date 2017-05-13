@@ -55,7 +55,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
     // Return the array after deleting the list
     valued_event** ve = get_sorted_array(e_list);
     *v_event_size = e_list->size; 
-    clear_event_list(e_list);
+    //clear_event_list(e_list);
     return ve;
 }
 

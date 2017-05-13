@@ -50,18 +50,20 @@ int main(int argc, char *argv[])
   MPI_Comm_size(MPI_COMM_WORLD,&group_size); 
   //gather at the root the number of available threads foreach node
   MPI_Datatype mpi_top_three = register_mpi_top_three();
+  MPI_Datatype mpi_valued_event = register_mpi_valued_event();
   int * n_threads_array =  get_n_threads_foreach_node(rank);
   if(rank==MPI_MASTER)
   {
-    set_debug_level(3);
-    ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_top_three);
+    set_debug_level(0);
+    ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_top_three, mpi_valued_event);
   }
   else
   {
-    set_debug_level(0);
-    ret_val = worker_execution(argc, argv, rank, mpi_top_three);
+    set_debug_level(10);
+    ret_val = worker_execution(argc, argv, rank, mpi_top_three, mpi_valued_event);
   }
   MPI_Type_free(&mpi_top_three);
+  MPI_Type_free(&mpi_valued_event);
   MPI_Finalize();
   return ret_val;
 }

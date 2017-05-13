@@ -70,7 +70,7 @@ int update_node_id(int node_id, int group_size)
     return node_id;
 }
 
-int master_execution(int argc, char * argv[], int group_size, int * n_threads_array, MPI_Datatype mpi_top_three)
+int master_execution(int argc, char * argv[], int group_size, int * n_threads_array, MPI_Datatype mpi_top_three, MPI_Datatype mpi_valued_event)
 {
   //argv[2] is the path to the comment file
   //argv[1] is the path to the post file
@@ -79,8 +79,11 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   char buffer [ MAX_OUTPUT_NAME_SIZE ];
   output_file_name[0]='\0';
   strcat(output_file_name,argv[3]);
-  snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(argv[3]),"%d",seconds);
   strcat(output_file_name, "_");
+  snprintf(buffer,sizeof(char)*3,"%d",group_size);
+  strcat(output_file_name,buffer);
+  strcat(output_file_name, "_");
+  snprintf(buffer,sizeof(char)*MAX_OUTPUT_NAME_SIZE-strlen(argv[3]),"%d",seconds);
   strcat(output_file_name, buffer);
   print_msg("BUCKET_SIZE", "%d", BUCKET_SIZE);
   print_msg("OUTPUT","The output will be saved at file %s", output_file_name);
@@ -95,8 +98,8 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
   print_info("Master entering in output file phase");
-  produce_output_file(output_file_name, group_size, mpi_top_three);
-  
+  //produce_output_file(output_file_name, group_size, mpi_top_three);
+  produce_output_file_event_variant(output_file_name,group_size,mpi_valued_event);
   free(n_threads_array);
   return 0;
 }

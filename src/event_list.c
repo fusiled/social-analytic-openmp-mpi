@@ -2,7 +2,10 @@
 #include "debug_utils.h"
 #include "quicksort.h"
 
+
 #include <stdlib.h>
+
+#include <limits.h>
 
 valued_event_list_element* create_valued_list_element(int post_ts, long post_id,long user_id, int score, int n_commenters, valued_event_list_element* next);
 
@@ -108,4 +111,100 @@ void destroy_element(valued_event_list_element* el)
 void print_valued_event(valued_event * ve)
 {
     print_msg("VALUED_EL","adr: %p, post_ts: %d, post_id: %ld, score: %d",ve, ve->post_ts,ve->post_id, ve->score);
+}
+
+
+char check_if_quit(int * ve_dim,int * counter_ar, int ve_size)
+{
+    char quit=1;
+    for(int i=0; i<ve_size; i++ )
+    {
+        if(counter_ar[i]<ve_dim[i])
+        {
+            quit=0;
+        }
+    }
+    return quit;
+}
+
+valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
+{
+    print_fine("in merge_valued_event_array_with_ref");
+    //malloc space
+    int out_size=0;
+    for(int i=0; i<ve_size;i++)
+    {
+        out_size = out_size + ve_dim[i];
+    }
+    valued_event * out_ref = malloc(sizeof(valued_event)*out_size);
+    if(out_ref==NULL)
+    {
+        print_error("cannot malloc out_ref in merge_valued_event_array_with_ref");
+        return NULL;
+    }
+    int * counter_ar = calloc(sizeof(int),ve_size);
+    int out_counter=0;
+    while(check_if_quit(ve_dim,counter_ar,ve_size)==0 && out_counter < out_size)
+    {
+        int index = -1;
+        //get element with minimum timestamp
+        int ts=INT_MAX;
+        for(int i=0; i<ve_size;i++)
+        {
+            int counter = counter_ar[i];
+            if( counter < ve_dim[i] && ts > ve_arr[i][counter]->post_ts )
+            {
+                ts = ve_arr[i][counter]->post_ts;
+                index = i;
+            }
+        }
+        //save selected element
+        out_ref[out_counter]=*(ve_arr[index][ counter_ar[index] ]);
+        counter_ar[index] = counter_ar[index]+1;
+        out_counter++;
+    }
+    free(counter_ar);
+    *out_size_ref=out_size;
+    return out_ref;
+}
+
+
+valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
+{
+     //malloc space
+    int out_size=0;
+    for(int i=0; i<ve_size;i++)
+    {
+        out_size = out_size + ve_dim[i];
+    }
+    valued_event * out_ref = malloc(sizeof(valued_event)*out_size);
+    if(out_ref==NULL)
+    {
+        print_error("cannot malloc out_ref in merge_valued_event_array");
+        return NULL;
+    }
+    int * counter_ar = calloc(sizeof(int),ve_size);
+    int out_counter=0;
+    while(check_if_quit(ve_dim,counter_ar,ve_size)==0 && out_counter < out_size)
+    {
+        int index = -1;
+        //get element with minimum timestamp
+        int ts=INT_MAX;
+        for(int i=0; i<ve_size;i++)
+        {
+            int counter = counter_ar[i];
+            if( counter < ve_dim[i] &&  ts > ve_arr[i][counter].post_ts )
+            {
+                ts = ve_arr[i][counter].post_ts;
+                index = i;
+            }
+        }
+        //save selected element
+        out_ref[out_counter]=ve_arr[index][ counter_ar[index] ];
+        counter_ar[index] = counter_ar[index]+1;
+        out_counter++;
+    }
+    free(counter_ar);
+    *out_size_ref=out_size;
+    return out_ref;
 }

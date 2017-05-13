@@ -250,3 +250,79 @@ int compare_top_three_without_timestamp(top_three * first, top_three * second)
 	}
 
 }
+
+
+char check_quit_combine(int * counter_ar, int size, int out_counter)
+{
+	char quit=1;
+	if(out_counter>=TOP_NUMBER)
+	{
+		return quit;
+	}
+	for(int i=0; i<size; i++)
+	{
+		if(counter_ar[i]<TOP_NUMBER)
+		{
+			quit=0;
+		}
+	}
+	return quit;
+}
+
+
+
+top_three * combine_top_three(top_three ** tt_ar, int size)
+{
+	//check that ts is the same, otherwise NULL is returned;
+	if(tt_ar==NULL || size==0)
+	{
+		return NULL;
+	}
+	int ts = tt_ar[0]->ts;
+	for(int i=1; i<size;i++)
+	{
+		if(tt_ar[i]->ts!=ts)
+		{
+			return NULL;
+		}
+	}
+	int * counter_ar = calloc(sizeof(int),size);
+	long post_id[TOP_NUMBER];
+	long user_id[TOP_NUMBER];
+	int post_score[TOP_NUMBER];
+	int n_commenters_ar[TOP_NUMBER];
+	int out_counter = 0;
+	while(check_quit_combine(counter_ar,size, out_counter)==0)
+	{
+		//get element of the top_three with the biggest score
+		int selected_tt=-1;
+		int selected_el=-1;
+		int score = -1;
+		int n_commenters = -1;
+		for(int i=0; i<size;i++)
+		{
+			int counter = counter_ar[i];
+			if(score < tt_ar[i]->post_score[counter] || 
+				(score == tt_ar[i]->post_score[counter] && n_commenters < tt_ar[i]->n_commenters[counter]) )
+			{
+				score = tt_ar[i]->post_score[counter];
+				selected_tt = i;
+				selected_el = counter;
+				n_commenters = tt_ar[i]->n_commenters[counter];
+			}
+		}
+		//push it into the arrays
+		post_id[out_counter]=tt_ar[selected_tt]->post_id[selected_el];
+		user_id[out_counter]=tt_ar[selected_tt]->user_id[selected_el];
+		post_score[out_counter]=tt_ar[selected_tt]->post_score[selected_el];
+		n_commenters_ar[out_counter]=tt_ar[selected_tt]->n_commenters[selected_el];
+
+		//increase counters
+		counter_ar[selected_tt] = counter_ar[selected_tt]+1;
+		out_counter++;
+	}
+
+	top_three * out_ref = new_top_three(ts,post_id,user_id,post_score,n_commenters_ar);
+	free(counter_ar);
+	return out_ref;
+}

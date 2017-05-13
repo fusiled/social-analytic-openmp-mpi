@@ -31,6 +31,11 @@ void add_element(event_list* list, int post_ts, long post_id,long user_id, int s
 
 valued_event** get_sorted_array(event_list* list);
 
+valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
+
+valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
+
+
 void clear_valued_event(valued_event* ve);
 
 void print_valued_event(valued_event * ve);

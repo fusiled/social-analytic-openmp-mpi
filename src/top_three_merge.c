@@ -20,7 +20,7 @@ unsigned char check_quit_loop_merge(int * tt_counter, int * tt_size_ar, int arra
 
 unsigned char check_quit_loop_merge(int * tt_counter, int * tt_size_ar, int array_dim)
 {
-  char quit = 1;
+  unsigned char quit = 1;
   for(int i=0; i<array_dim; i++)
   {
     if(tt_counter[i]<tt_size_ar[i])
@@ -56,7 +56,7 @@ top_three * top_three_merge(top_three *** tt_matrix, int * tt_size_ar,int group_
   int out_counter=0;
   while(quit_loop==0)
   {
-  	print_info("New iteration");
+  	//print_info("New iteration");
     int ts = INT_MAX;
     //print_fine("ts: %d", ts);
     //get the minor timestamp among tt_matrix[i][counter]
@@ -70,7 +70,6 @@ top_three * top_three_merge(top_three *** tt_matrix, int * tt_size_ar,int group_
         if(tt_matrix[i][counter]->ts < ts)
         {
           ts = tt_matrix[i][counter]->ts;
-          //print_fine("ts update: %d ", ts);
         }
       }
     }
@@ -79,11 +78,11 @@ top_three * top_three_merge(top_three *** tt_matrix, int * tt_size_ar,int group_
       quit_loop=1;
       continue;
     }
-    print_info("selected timestamp: %d", ts);
+    //print_info("selected timestamp: %d", ts);
     //fetch the elements from tt_matrix that have the correct ts among tt_matrix[i][counter]
     //and put them into selected_tt
     //print_info("Fetching elements from tt_matrix");
-    top_three ** selected_tt = calloc(sizeof(top_three*),group_size );
+    top_three ** selected_tt = malloc(sizeof(top_three*)*group_size );
     int selected_tt_size = 0;
     for(int i=0; i<group_size; i++)
     {
@@ -99,26 +98,15 @@ top_three * top_three_merge(top_three *** tt_matrix, int * tt_size_ar,int group_
     top_three * tt_winner = NULL;
     if(selected_tt_size==1)
     {
-      print_fine("one winnner");
       tt_winner = selected_tt[0];
     }
     else
     if(selected_tt_size>1)
     {
-      print_fine("multi winnner");
-      tt_winner = selected_tt[0];
-      for(int i=1; i<group_size; i++)
-      {
-        int counter = tt_counter[i];
-        int cmp_result = compare_top_three_score(tt_winner,tt_matrix[i][counter]);
-        if(cmp_result<0)
-        {
-          tt_winner = tt_matrix[i][counter];
-        }
-      }
+      tt_winner = combine_top_three(selected_tt,selected_tt_size);
     }
     free(selected_tt);
-    print_fine("out writing phase");
+    //print_fine("out writing phase");
     if(tt_winner!=NULL)
     {
       //if it's major or if it's different than the old one update

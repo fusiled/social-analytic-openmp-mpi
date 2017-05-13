@@ -13,4 +13,6 @@ int * get_n_threads_foreach_node();
 
 MPI_Datatype register_mpi_top_three();
 
+MPI_Datatype register_mpi_valued_event();
+
 #endif

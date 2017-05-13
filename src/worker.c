@@ -73,13 +73,13 @@ post_block * receive_post(int worker_id)
 }
 
 
-int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_top_three)
+int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_top_three, MPI_Datatype mpi_valued_event)
 {
 	MPI_Status ret;
 	//wait for job reception. If i receive a negative number then i can stop to
 	// listen
 	int * n_posts = malloc(sizeof(int));
-	top_three *** main_keeper = malloc(sizeof(top_three **)*MAX_EVENT_KEEPER_SIZE );
+	valued_event *** main_keeper = malloc(sizeof(valued_event **)*MAX_EVENT_KEEPER_SIZE );
 	int * main_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
 	int main_keeper_size=0;
 	print_info("Worker %d is waiting for n_posts...", worker_id);
@@ -95,10 +95,10 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 			//print_info("---->Worker %d Received post_block of post %ld",worker_id,  pb->post_id );
 		}
 		print_info("Worker %d received a post_block. Spawning task");
-		#pragma omp parallel
-	    #pragma omp single nowait 
+		//#pragma omp parallel
+	    //#pragma omp single nowait 
 	    {
-	    	#pragma omp task  shared(worker_id)
+	    	//#pragma omp task  shared(worker_id)
 	    	{
 	    		int t_num = omp_get_thread_num();		    		
 	    		int v_event_size;
@@ -106,86 +106,60 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
 	    		print_fine("(%d,%d) processed a post_block batch", worker_id, t_num);
 				//compute top_three for current v_event_array
-				int output_top_three_size;
-				top_three ** output_top_three = parse_events(v_event_array, v_event_size, &output_top_three_size);
 				//valued events now are useless. Free space!
-				print_info("freeing unused stuff");
-				for(int i=0; i<v_event_size;i++)
-				{
-					clear_valued_event(v_event_array[i]);
-				}
-				free(v_event_array);
-	    		//free post_block array
-				for(int i=0; i<*n_posts; i++)
-				{
-					del_post_block(pb_ar[i]);
-				}
-				free(pb_ar);
 
 				/*for(int i=0; i<output_top_three_size;i++)
 				{
 					print_top_three(output_top_three[i]);
 				}*/
 	      		//add output_top_three array to the main_keeper
-	      		#pragma omp critical 
+	      		//#pragma omp critical 
       			{
-      				main_keeper[main_keeper_size] = output_top_three;
-      				main_keeper_dim[main_keeper_size] = output_top_three_size;
+      				main_keeper[main_keeper_size] = v_event_array;
+      				main_keeper_dim[main_keeper_size] = v_event_size;
 					print_fine("(%d,%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, t_num, main_keeper_size);
       				main_keeper_size++;
       			}
-				//clear_event_list(e_list);
+				for(int i=0; i<*n_posts; i++)
+				{
+					del_post_block(pb_ar[i]);
+				}
+				free(pb_ar);
 	    	}
 	    }
 		print_info("Worker %d is waiting for n_posts...", worker_id);
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
-	#pragma omp barrier
+	//#pragma omp barrier
 	free(n_posts);
 	print_info("Worker %d received the stop signal for post trasmission. main_keeper_size: %d", worker_id, main_keeper_size);
-	//resize keeper stuff
-	//resize_keeper(&main_keeper,&main_keeper_dim,main_keeper_size);
 	
-	/*for(int i=0; i<main_keeper_size;i++)
+	int out_size;
+	valued_event * out_ar = merge_valued_event_array_with_ref(main_keeper, main_keeper_dim, main_keeper_size, &out_size);
+	print_fine("out_size is %d", out_size);
+	if(out_ar==NULL)
 	{
-		for(int j=0; j<main_keeper_dim[i];j++)
-		{
-			print_top_three(main_keeper[i][j]);
-		}
-	}*/
-	//use parse events on single entries of main_keeper, then reuse the 
-	//code in output_producer to merge the top_three. Then send everything to master
-	int out_size=0;
-	print_info("main_keeper_size: %d", main_keeper_size);
-	top_three * out_ar = top_three_merge(main_keeper,main_keeper_dim,main_keeper_size,&out_size);
-	/*for(int i=0; i<out_size;i++)
-	{
-		print_top_three(out_ar+i);
+		print_error("cannot malloc out_ar");
 	}
-	//compute top3
-	/*long pid[]={1,2,3};
-	long uid[]={4,5,6};
-	int score[]={10,20,30};
-	int nc[]={7,8,9};
-	top_three * top_three_ar = new_top_three(worker_id,pid,uid,score,nc);
-	int top_three_ar_size = 1;*/
-	//top_three * out_ar = NULL;
-	print_info("Worker %d is sending its top_three", worker_id);
+	print_info("Worker %d is sending its valued_events", worker_id);
 	MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
-	MPI_Send(out_ar,out_size,mpi_top_three,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+	MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
 
 	//FINAL CLEANUP
+	print_info("freeing unused stuff");
+	free(out_ar);
+	print_info("freeing main keeper stuff");
 	//free main_keeper stuff
 	for(int i=0; i<main_keeper_size; i++)
 	{
 		for(int j=0; j<main_keeper_dim[i];j++)
 		{
-			del_top_three(main_keeper[i][j]);
+			clear_valued_event(main_keeper[i][j]);
 		}
 	}
 	free(main_keeper);
 	free(main_keeper_dim);
-
+	print_info("Worker %d terminating successfully (:");
 	return 0;
 }
 

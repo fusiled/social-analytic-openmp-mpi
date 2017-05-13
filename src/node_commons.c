@@ -9,6 +9,7 @@
 #include "global_variables.h"
 #include "debug_utils.h"
 #include "top_three.h"
+#include "event_list.h"
 
 extern const int MPI_MASTER;
 
@@ -47,4 +48,29 @@ MPI_Datatype register_mpi_top_three()
   }
   MPI_Type_commit(&mpi_top_three);
   return mpi_top_three;
+}
+
+/*int post_ts;
+    long post_id;
+    long user_id;
+    int score;
+    int n_commenters;*/
+MPI_Datatype register_mpi_valued_event()
+{
+  int array_of_block_lengths []= {1, 1, 1, 1, 1};
+  MPI_Aint  array_of_displacements [5];
+  array_of_displacements[0]= offsetof(valued_event, post_ts);
+  array_of_displacements[1]= offsetof(valued_event, post_id);
+  array_of_displacements[2]= offsetof(valued_event, user_id);
+  array_of_displacements[3]= offsetof(valued_event, score);
+  array_of_displacements[4]= offsetof(valued_event, n_commenters);
+  MPI_Datatype array_of_types  [] = {MPI_INT, MPI_LONG, MPI_LONG,MPI_INT, MPI_INT};
+  MPI_Datatype mpi_valued_event;
+  int result = MPI_Type_create_struct(5,array_of_block_lengths,array_of_displacements,array_of_types, &mpi_valued_event);
+  if(result!=MPI_SUCCESS)
+  {
+    print_error("Error in creating the struct");
+  }
+  MPI_Type_commit(&mpi_valued_event);
+  return mpi_valued_event; 
 }

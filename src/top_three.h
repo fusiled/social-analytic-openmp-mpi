@@ -39,6 +39,8 @@ int compare_top_three_score(top_three * first, top_three * second);
 
 int compare_top_three_without_timestamp(top_three * first, top_three * second);
 
+top_three * combine_top_three(top_three ** tt_ar, int size);
+
 //NOTE: the returned string must be freed
 char * to_string_tuple_top_three(top_three * tt);
 
