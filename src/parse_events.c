@@ -215,7 +215,7 @@ top_three* create_top_three(valued_event** ve, int ts)
     {
         // Now the user_id and the n_commenters are empty
         user_id[i] = ve[i]->user_id;
-        n_commenters[i] = EMPTY_VALUE;
+        n_commenters[i] = ve[i]->n_commenters;
         if (!(ve[i]==NULL))
         {
             post_id[i] = ve[i]->post_id;

@@ -4,7 +4,7 @@
 
 #include <stdlib.h>
 
-valued_event_list_element* create_valued_list_element(int post_ts, long post_id,long user_id, int score, valued_event_list_element* next);
+valued_event_list_element* create_valued_list_element(int post_ts, long post_id,long user_id, int score, int n_commenters, valued_event_list_element* next);
 
 void destroy_element(valued_event_list_element* el);
 
@@ -32,9 +32,9 @@ void clear_event_list(event_list * list)
     free(list);
 }
 
-void add_element(event_list* list, int post_ts, long post_id, long user_id, int score)
+void add_element(event_list* list, int post_ts, long post_id, long user_id, int score, int n_commenters)
 {
-    valued_event_list_element* el = create_valued_list_element(post_ts, post_id, user_id, score, list->head);
+    valued_event_list_element* el = create_valued_list_element(post_ts, post_id, user_id, score, n_commenters,list->head);
     if (el==NULL)
     {
         print_error("Cannot allocate a list element");
@@ -73,7 +73,7 @@ void clear_valued_event(valued_event* ve)
     free(ve);
 }
 
-valued_event_list_element* create_valued_list_element(int post_ts, long post_id, long user_id, int score, valued_event_list_element* next)
+valued_event_list_element* create_valued_list_element(int post_ts, long post_id, long user_id, int score, int n_commenters, valued_event_list_element* next)
 {
     valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
     if (el==NULL)
@@ -91,6 +91,7 @@ valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
     vv->post_ts=post_ts;
     vv->post_id=post_id;
     vv->user_id=user_id;
+    vv->n_commenters=n_commenters;
     vv->score=score;
     el->v=vv;
     el->next=next;

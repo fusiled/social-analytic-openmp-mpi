@@ -27,7 +27,7 @@ event_list* create_event_list();
 
 void clear_event_list(event_list * e_list);
 
-void add_element(event_list* list, int post_ts, long post_id,long user_id, int score);
+void add_element(event_list* list, int post_ts, long post_id,long user_id, int score, int n_commenters);
 
 valued_event** get_sorted_array(event_list* list);
 

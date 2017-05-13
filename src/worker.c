@@ -17,8 +17,6 @@
 
 #include "top_three_merge.h"
 
-#include "event_list.h"
-
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -104,9 +102,8 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	    	{
 	    		int t_num = omp_get_thread_num();		    		
 	    		int v_event_size;
-	    		event_list * e_list;
 	    		print_fine("pb_ar at %p", pb_ar);
-	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size, &e_list);
+	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
 	    		print_fine("(%d,%d) processed a post_block batch", worker_id, t_num);
 				//compute top_three for current v_event_array
 				int output_top_three_size;
@@ -149,15 +146,13 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_t
 	//resize keeper stuff
 	//resize_keeper(&main_keeper,&main_keeper_dim,main_keeper_size);
 	
-	for(int i=0; i<main_keeper_size;i++)
+	/*for(int i=0; i<main_keeper_size;i++)
 	{
 		for(int j=0; j<main_keeper_dim[i];j++)
 		{
 			print_top_three(main_keeper[i][j]);
 		}
-	}
-
-	//TODO compute top_three
+	}*/
 	//use parse events on single entries of main_keeper, then reuse the 
 	//code in output_producer to merge the top_three. Then send everything to master
 	int out_size=0;
