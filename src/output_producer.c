@@ -31,9 +31,9 @@ void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mp
     //it is useless to allocate space to MPI_MASTER
     print_info("Receiving a valued_event array from worker %d", node_id);
     MPI_Status ret;
-    MPI_Recv(ve_size_ar+node_id-1,1,MPI_INT,node_id, TOP_THREE_NUMBER_TAG*node_id, MPI_COMM_WORLD, &ret);
+    MPI_Recv(ve_size_ar+node_id-1,1,MPI_INT,node_id, VALUED_EVENT_NUMBER_TAG*node_id, MPI_COMM_WORLD, &ret);
     ve_matrix[node_id-1]=malloc(sizeof(valued_event)*ve_size_ar[node_id-1]);
-    MPI_Recv(ve_matrix[node_id-1],ve_size_ar[node_id-1],mpi_valued_event,node_id, TOP_THREE_TRANSMISSION_TAG*node_id, MPI_COMM_WORLD, &ret);
+    MPI_Recv(ve_matrix[node_id-1],ve_size_ar[node_id-1],mpi_valued_event,node_id, VALUED_EVENT_TRANSMISSION_TAG*node_id, MPI_COMM_WORLD, &ret);
   }
   //now we produce the output
   FILE * out_fp = fopen(output_file_name,"w"); 

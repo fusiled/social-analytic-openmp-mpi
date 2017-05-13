@@ -15,8 +15,6 @@
 
 #include "parse_events.h"
 
-#include "top_three_merge.h"
-
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -139,13 +137,13 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		#pragma omp section
 		{
 			print_info("Worker %d is sending its valued_events", worker_id);
-			MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, TOP_THREE_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
-			MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, TOP_THREE_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+			MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, VALUED_EVENT_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
+			MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
 			free(out_ar);
 		}
 		#pragma omp section
 		{
-			print_info("freeing main keeper stuff");
+			print_fine("freeing memory");
 			//free main_keeper stuff
 			for(int i=0; i<main_keeper_size; i++)
 			{
