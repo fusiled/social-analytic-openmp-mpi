@@ -1,5 +1,6 @@
 #include "event_list.h"
 #include "debug_utils.h"
+//include for sorting facilities
 #include "quicksort.h"
 
 
@@ -7,12 +8,27 @@
 
 #include <limits.h>
 
-valued_event_list_element* create_valued_list_element(int post_ts, long post_id,long user_id, int score, int n_commenters, valued_event_list_element* next);
 
-void destroy_element(valued_event_list_element* el);
+//PRIVATE function.
+//malloc a valued_list_element and initialize it with the specified fields
+valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
+        long user_id, int score, int n_commenters, valued_event_list_element* next);
+
+
+//PRIVATE function
+//It does not delete the valued_event contained into the element of the list
+void destroy_valued_list_element(valued_event_list_element* el);
+
+
+
+//PRIVATE FUNCTION. associated to merge_valued_event_with_ref_[something].
+//check if it's necessary to quit from the merging loop
+char check_if_quit(int * ve_dim,int * counter_ar, int ve_size);
+
 
 event_list* create_event_list()
 {
+    //trivial malloc routine
     event_list* list = malloc(sizeof(event_list));
     if (list == NULL)
     {
@@ -25,6 +41,7 @@ event_list* create_event_list()
 
 void clear_event_list(event_list * list)
 {
+    //trivial list exploration
     valued_event_list_element * tmp = list->head;
     while(tmp!=NULL)
     {  
@@ -37,6 +54,7 @@ void clear_event_list(event_list * list)
 
 void add_element(event_list* list, int post_ts, long post_id, long user_id, int score, int n_commenters)
 {
+    //trivial list addition
     valued_event_list_element* el = create_valued_list_element(post_ts, post_id, user_id, score, n_commenters,list->head);
     if (el==NULL)
     {
@@ -101,8 +119,7 @@ valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
     return el;
 }
 
-// It does not delete the valued_event contained into the element of the list
-void destroy_element(valued_event_list_element* el)
+void destroy_valued_list_element(valued_event_list_element* el)
 {
     free(el);
 }
@@ -114,6 +131,7 @@ void print_valued_event(valued_event * ve)
 }
 
 
+//PRIVATE FUNCTION. associated to merge_valued_event_with_ref_[something]
 char check_if_quit(int * ve_dim,int * counter_ar, int ve_size)
 {
     char quit=1;

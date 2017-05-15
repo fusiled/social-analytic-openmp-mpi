@@ -88,9 +88,10 @@ char * build_output_file_name( char * out_prefix, int group_size)
 
 int master_execution(int argc, char * argv[], int group_size, int * n_threads_array,MPI_Datatype mpi_valued_event)
 {
-  //argv[3] is the prefix where the output will generated
-  //argv[2] is the path to the comment file
-  //argv[1] is the path to the post file
+  //argv[4] is the prefix where the output will generated
+  //argv[3] is the path to the comment file
+  //argv[2] is the path to the post file
+  //ARGV[1] is the bucket size
   int bucket_size = atoi(argv[1]);
   if(bucket_size<0)
   {
@@ -103,14 +104,15 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   //init pclh
   pclh = kh_init(post_comment_list_hashmap); //pclh[post_id] -> comment_list
 
+  print_fine("Master is processing the comments...");
   build_post_to_comment_list_hashmap(argv[3]);
-
+  print_info("Master processed commments... Now It begins the post_block transmission phase");
   process_posts_and_transmit(argv[2], group_size, bucket_size);
 
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
-  print_info("Master entering in output file phase");
+  print_info("Master begins to receive events from workers");
   produce_output_file(output_file_name,group_size,mpi_valued_event);
   free(n_threads_array);
   free(output_file_name);
@@ -121,7 +123,7 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
 
 void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int node_id){
   //notify worker: we send it the number of post blocks that master will transmit
-  print_info("Sending post reception signal of %d to worker %d", *post_ar_size, node_id);
+  print_fine("Sending post reception signal of %d to worker %d", *post_ar_size, node_id);
   MPI_Send(post_ar_size,1,MPI_INT,node_id,POST_NUMBER_TAG*node_id,MPI_COMM_WORLD);
   //send to node the number of posts that it will receive
   for(int i=0; i < (*post_ar_size); i++)
@@ -270,7 +272,6 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size, int bu
   {
     node_id=update_node_id(node_id, group_size);
     transmit_post_block_array_to_node(post_ar, read_lines, node_id);
-    //print_info("Post_ar ref is %p", post_ar);
     del_post(post_ar);
     post_ar = parse_post(post_fp,bucket_size, read_lines); 
   }

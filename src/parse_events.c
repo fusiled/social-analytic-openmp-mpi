@@ -59,7 +59,9 @@ top_three ** parse_events(valued_event* events_array, int size, int* out_size)
     }
     // Return the array
     print_fine("finished building the list. making it into an array");
-    return get_top_three_array(list, out_size);
+    top_three ** output_top_three_ar =get_top_three_array(list, out_size);
+    clear_top_three_list(list);
+    return output_top_three_ar;
 }
 
 // Add an event into the array at pos (the remaining values are right-shifted)
@@ -84,72 +86,6 @@ void add_event_to_the_array(valued_event* array, valued_event* el, int pos)
 // and 1 is returned. Otherwise, the function returns 0 (false).
 int check_change(valued_event** array, valued_event* ve, int * array_size)
 {
-    /*for (int i=0; i<NUM_TOP_POSTS; i++)
-    {
-        if (array[i] == NULL)
-        {
-            // There is a free space. Add the event to the list and return
-            add_event_to_the_array(array, ve, i);
-            // The change is notified iff i<TOP_NUMBER
-            return (i<TOP_NUMBER);
-        }
-        else
-        {
-            if (!(ve->post_id == array[i]->post_id) && ve->score > array[i]->score)
-            {
-                // Small check: if the post is already into the top_three I have to delete it
-                for (int j=i+1; j<NUM_TOP_POSTS; j++)
-                {
-                    if (array[i]->post_id == ve->post_id)
-                    {
-                        array[i] = NULL;
-                    }
-                }
-                // Add the event
-                add_event_to_the_array(array, ve, i);
-                // The change is notified iff i<TOP_NUMBER
-                return (i<TOP_NUMBER);
-            }
-            else if (ve->post_id == array[i]->post_id)
-            {
-                // Update the event score. Check if it is smaller than the following ones.
-                if (ve->score < array[i]->score)
-                {
-                    // Change the event.
-                    array[i] = ve;
-                    // Now continue with the checks on the subsequent events in order
-                    // to find the new top three.
-                    int flag = 1, j;
-                    for (j=i+1;flag && j<NUM_TOP_POSTS; j++)
-                    {
-                        if (ve->score < array[j]->score)
-                        {
-                            // Invert the two events
-                            array[j-1] = array[j];
-                        }
-                        else
-                        {
-                            // Stop the checks.
-                            flag = 0;
-                        }
-                    }
-                    // Save at pos j-1 the new score iff there were some changes in the top-three.
-                    if (!flag)
-                    {
-                        array[j-1] = ve;
-                    }
-                }
-                else
-                {
-                    array[i] = ve;
-                }
-                // The change is notified iff i<TOP_NUMBER
-                return (i<TOP_NUMBER);
-            }
-        }
-    }
-    // No changes case.
-    return 0;*/
     if(*array_size==0)
     {
         array[0]=ve;

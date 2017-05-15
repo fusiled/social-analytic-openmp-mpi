@@ -33,8 +33,6 @@ extern const int VALUED_EVENT_TRANSMISSION_TAG;
 //receive a post from MPI_MASTER and return the associated post_block
 post_block * receive_post(int worker_id);
 
-void resize_keeper(top_three **** keeper, int ** keeper_dim, int keeper_size);
-
 post_block * receive_post(int worker_id)
 {
 	MPI_Status ret;
@@ -74,8 +72,7 @@ post_block * receive_post(int worker_id)
 int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_valued_event)
 {
 	MPI_Status ret;
-	//wait for job reception. If i receive a negative number then i can stop to
-	// listen
+	//wait for job reception. If i receive a negative number then i can stop to listen
 	int * n_posts = malloc(sizeof(int));
 	valued_event *** main_keeper = malloc(sizeof(valued_event **)*MAX_EVENT_KEEPER_SIZE );
 	int * main_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
@@ -90,9 +87,8 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		{
 			//mpi routine for receive
 			pb_ar[i] = receive_post(worker_id);
-			//print_info("---->Worker %d Received post_block of post %ld",worker_id,  pb->post_id );
 		}
-		print_info("Worker %d received a post_block. Spawning task");
+		print_fine("Worker %d received a post_block. Spawning task");
 		#pragma omp parallel
 	    #pragma omp single nowait 
 	    {
@@ -100,15 +96,14 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	    	{
 	    		int t_num = omp_get_thread_num();		    		
 	    		int v_event_size;
-	    		print_fine("pb_ar at %p", pb_ar);
+	    		//with this function we generate an array of pointers to valued events.
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
-	    		print_fine("(%d,%d) processed a post_block batch", worker_id, t_num);
-				//compute top_three for current v_event_array
-	      		#pragma omp critical 
+	    		//save v_event_array into main_keeper. Avoid race conditions with a critical section
+	      		#pragma omp critical(MAIN_KEEPER_UPDATE)
       			{
       				main_keeper[main_keeper_size] = v_event_array;
       				main_keeper_dim[main_keeper_size] = v_event_size;
-					print_fine("(%d,%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, t_num, main_keeper_size);
+					print_fine("(%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, main_keeper_size);
       				main_keeper_size++;
       			}
 				for(int i=0; i<*n_posts; i++)
@@ -118,7 +113,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 				free(pb_ar);
 	    	}
 	    }
-		print_info("Worker %d is waiting for n_posts...", worker_id);
+		print_fine("Worker %d is waiting for n_posts...", worker_id);
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
 	#pragma omp barrier
@@ -127,11 +122,12 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	
 	int out_size;
 	valued_event * out_ar = merge_valued_event_array_with_ref(main_keeper, main_keeper_dim, main_keeper_size, &out_size);
-	print_fine("out_size is %d", out_size);
+	print_fine("worker %d produced a valued event array %d big.",worker_id, out_size);
 	if(out_ar==NULL)
 	{
-		print_error("cannot malloc out_ar");
+		print_error("worker %d cannot malloc out_ar", worker_id);
 	}
+	//simple parallel section. Free memory while sending the valued_event array
 	#pragma omp parallel sections
 	{
 		#pragma omp section
@@ -158,42 +154,4 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	}
 	print_info("Worker %d terminating successfully (:", worker_id);
 	return 0;
-}
-
-
-
-void resize_keeper(top_three **** keeper, int ** keeper_dim, int keeper_size)
-{
-	//free space
-	if(keeper_size==0)
-	{
-		//free unused space as soon as we can. To avoid errors on future free 
-		//also set the returning pointers to null
-		free(*keeper);
-		free(*keeper_dim);
-		*keeper=NULL;
-		*keeper_dim=NULL;
-	}
-	//else resize
-	else if(keeper_size>0)
-	{
-		top_three *** keeper_buffer = realloc(*keeper,sizeof(top_three**)*keeper_size);
-		if(keeper_buffer==NULL)
-		{
-			print_warning("Error in main_keeper resizing. Keeping the old one");
-		}
-		else
-		{
-			*keeper = keeper_buffer;
-		}
-		int * keeper_dim_buffer = realloc(*keeper_dim,sizeof(int)*keeper_size);
-		if(keeper_dim_buffer==NULL)
-		{
-			print_warning("Error in main_keeper_dim resizing. Keeping the old one");
-		}
-		else
-		{
-			*keeper_dim = keeper_dim_buffer;
-		}
-	}	
 }

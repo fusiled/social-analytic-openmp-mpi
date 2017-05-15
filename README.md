@@ -10,7 +10,7 @@ Just run the `configure` bash script to generate the needed directories, then us
 ## execution
 
 You must pass to the executable in sequence the posts file, the comments file and the name of the output file like in the following command:
-` exec_name posts.dat comments.dat output_file`
+` exec_name bucker_size posts.dat comments.dat output_file`
 
 # Credits
 

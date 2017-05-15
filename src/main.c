@@ -50,21 +50,21 @@ int main(int argc, char *argv[])
   int group_size;
   MPI_Comm_rank(MPI_COMM_WORLD,&rank); 
   MPI_Comm_size(MPI_COMM_WORLD,&group_size); 
-  //gather at the root the number of available threads foreach node
+  //create mpi_valued_evetn struct and commit it
   MPI_Datatype mpi_valued_event = register_mpi_valued_event();
+  //gather at the root the number of available threads foreach node
   int * n_threads_array =  get_n_threads_foreach_node(rank);
   set_debug_level(2);
   if(rank==MPI_MASTER)
   {
-    //set_debug_level(0);
     ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_valued_event);
   }
   else
   {
-   // set_debug_level(10);
     ret_val = worker_execution(argc, argv, rank, mpi_valued_event);
   }
+  //clear mpi environment
   MPI_Type_free(&mpi_valued_event);
   MPI_Finalize();
-  return ret_val;
+  return 0;
 }

@@ -8,10 +8,6 @@
 
 #include "debug_utils.h"
 
-/**
-* Header for utility functions
-*
-**/
 
 void del_double_ref_array(void ** array, int size)
 {

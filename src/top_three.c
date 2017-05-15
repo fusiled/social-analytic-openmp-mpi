@@ -8,6 +8,9 @@
 #include <string.h>
 
 
+#define UNDEF_SIGN "-"
+
+
 top_three * new_top_three(int ts, long p_post_id[TOP_NUMBER], 
 		long p_user_id[TOP_NUMBER],int p_post_score[TOP_NUMBER], int p_n_commenters[TOP_NUMBER])
 {
@@ -87,17 +90,45 @@ char * to_string_tuple_top_three(top_three * tt)
 	for(int i=0; i<TOP_NUMBER; i++)
 	{
 		strcat(output,",");
-		ltoa(tt->post_id[i],buf);
-		strcat(output,buf);
+		if(tt->post_id[i]==-1)
+		{
+			strcat(output,UNDEF_SIGN);
+		}
+		else
+		{
+			ltoa(tt->post_id[i],buf);
+			strcat(output,buf);
+		}
 		strcat(output,",");
-		ltoa(tt->user_id[i],buf);
-		strcat(output,buf);
+		if(tt->user_id[i]==-1)
+		{
+			strcat(output,UNDEF_SIGN);
+		}
+		else
+		{
+			ltoa(tt->user_id[i],buf);
+			strcat(output,buf);
+		}
 		strcat(output, ",");
-		itoa(tt->post_score[i],buf);
-		strcat(output,buf);
+		if(tt->post_score[i]==-1)
+		{
+			strcat(output,UNDEF_SIGN);
+		}
+		else
+		{
+			itoa(tt->post_score[i],buf);
+			strcat(output,buf);
+		}
 		strcat(output, ",");
-		itoa(tt->n_commenters[i],buf);
-		strcat(output,buf);
+		if(tt->post_score[i]==-1)
+		{
+			strcat(output,UNDEF_SIGN);
+		}
+		else
+		{
+			itoa(tt->n_commenters[i],buf);
+			strcat(output,buf);
+		}
 	}
 	return output;
 }
