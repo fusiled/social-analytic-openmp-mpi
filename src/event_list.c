@@ -52,6 +52,26 @@ void clear_event_list(event_list * list)
     free(list);
 }
 
+
+
+
+valued_event * new_valued_event(int post_ts, long post_id, long user_id, int score, int n_commenters)
+{
+    valued_event * ret_ref = malloc(sizeof(valued_event));
+    if(ret_ref==NULL)
+    {
+        print_error("Cannot malloc valued_event");
+    }
+    ret_ref->post_ts=post_ts;
+    ret_ref->post_id=post_id;
+    ret_ref->user_id=user_id;
+    ret_ref->score=score;
+    ret_ref->n_commenters = n_commenters;
+    return ret_ref;
+
+}
+
+
 void add_element(event_list* list, int post_ts, long post_id, long user_id, int score, int n_commenters)
 {
     //trivial list addition
@@ -102,18 +122,7 @@ valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
         print_error("cannot malloc a valued_event_list_element");
         return NULL;
     }
-    valued_event* vv = malloc(sizeof(valued_event));
-    if (vv==NULL)
-    {
-        print_error("cannoc malloc a valued_event");
-        free(el);
-        return NULL;
-    }
-    vv->post_ts=post_ts;
-    vv->post_id=post_id;
-    vv->user_id=user_id;
-    vv->n_commenters=n_commenters;
-    vv->score=score;
+    valued_event* vv = new_valued_event(post_ts,post_id,user_id,score,n_commenters);
     el->v=vv;
     el->next=next;
     return el;
@@ -195,6 +204,7 @@ valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, in
     {
         out_size = out_size + ve_dim[i];
     }
+    print_fine("final valued_event array size will be of %d", out_size);
     valued_event * out_ref = malloc(sizeof(valued_event)*out_size);
     if(out_ref==NULL)
     {

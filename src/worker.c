@@ -152,6 +152,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 			free(main_keeper_dim);
 		}
 	}
+	MPI_Barrier(MPI_COMM_WORLD);
 	print_info("Worker %d terminating successfully (:", worker_id);
 	return 0;
 }

@@ -18,7 +18,7 @@
 extern const int VALUED_EVENT_NUMBER_TAG;
 extern const int VALUED_EVENT_TRANSMISSION_TAG;
 
-void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_valued_event)
+int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_valued_event)
 {
   //receive the valued_events from all the workers and save the received array into ve_matrix
   //ve_size_ar contains the dimension of the array transmitted from the workers.
@@ -35,17 +35,16 @@ void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mp
     ve_matrix[node_id-1]=malloc(sizeof(valued_event)*ve_size_ar[node_id-1]);
     MPI_Recv(ve_matrix[node_id-1],ve_size_ar[node_id-1],mpi_valued_event,node_id, VALUED_EVENT_TRANSMISSION_TAG*node_id, MPI_COMM_WORLD, &ret);
   }
-  //now we produce the output
-  FILE * out_fp = fopen(output_file_name,"w"); 
-  if(out_fp==NULL)
-  {
-    print_error("Cannot open output file at path %s", output_file_name);
-    return;
-  }
 
+  MPI_Barrier(MPI_COMM_WORLD);
   print_fine("merging value_event arrays into one");
   int global_ve_size;
   valued_event * global_ve_ar = merge_valued_event_array(ve_matrix, ve_size_ar, group_size-1, &global_ve_size);
+  if(global_ve_ar==NULL)
+  {
+    print_error("Cannot create merged valued_event_array...");
+    return -1;
+  }
   for(int i=0; i<group_size-1;i++)
   {
     free(ve_matrix[i]);
@@ -57,6 +56,13 @@ void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mp
   free(global_ve_ar);
   print_info("Output will be composed of %d entries", output_top_three_size);
   print_fine("Finally writing the output file (:");
+  //now we produce the output
+  FILE * out_fp = fopen(output_file_name,"w"); 
+  if(out_fp==NULL)
+  {
+    print_error("Cannot open output file at path %s", output_file_name);
+    return -1;
+  }
   for(int i=0; i<output_top_three_size; i++)
   {
     char * output_line = to_string_tuple_top_three(output_top_three[i]);
@@ -66,4 +72,5 @@ void produce_output_file(char *output_file_name, int group_size, MPI_Datatype mp
     free(output_line);
   }
   free(output_top_three);
+  return 0;
 }

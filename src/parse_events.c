@@ -60,6 +60,7 @@ top_three ** parse_events(valued_event* events_array, int size, int* out_size)
     // Return the array
     print_fine("finished building the list. making it into an array");
     top_three ** output_top_three_ar =get_top_three_array(list, out_size);
+    free(tt_current_top);
     clear_top_three_list(list);
     return output_top_three_ar;
 }

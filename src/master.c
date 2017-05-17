@@ -93,6 +93,7 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   //argv[2] is the path to the post file
   //ARGV[1] is the bucket size
   int bucket_size = atoi(argv[1]);
+  int ret_val;
   if(bucket_size<0)
   {
     print_error("Invalid bucket_size set to %d. Quitting...", bucket_size);
@@ -113,7 +114,12 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
   print_info("Master begins to receive events from workers");
-  produce_output_file(output_file_name,group_size,mpi_valued_event);
+  ret_val = produce_output_file(output_file_name,group_size,mpi_valued_event);
+  if(ret_val<0)
+  {
+    print_error("cannot produce output_file");
+    return -1;
+  }
   free(n_threads_array);
   free(output_file_name);
   print_info("Master is terminating successfully (:");

@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
   MPI_Datatype mpi_valued_event = register_mpi_valued_event();
   //gather at the root the number of available threads foreach node
   int * n_threads_array =  get_n_threads_foreach_node(rank);
-  set_debug_level(2);
+  set_debug_level(0);
   if(rank==MPI_MASTER)
   {
     ret_val = master_execution(argc, argv, group_size, n_threads_array, mpi_valued_event);

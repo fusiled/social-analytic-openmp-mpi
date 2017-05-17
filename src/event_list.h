@@ -34,6 +34,10 @@ void clear_event_list(event_list * e_list);
 void add_element(event_list* list, int post_ts, long post_id,long user_id, int score, int n_commenters);
 
 
+//malloc a new valued_event with given parameters
+valued_event * new_valued_event(int post_ts, long post_id, long user_id, int score, int n_commenters);
+
+
 //Return an array of valued_event pointers. The array will be sorted taking into account the timestamp of
 //the valued events
 valued_event** get_sorted_array(event_list* list);
