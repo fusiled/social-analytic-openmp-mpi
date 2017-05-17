@@ -93,17 +93,17 @@ int check_change(valued_event** array, valued_event* ve, int * array_size)
         *array_size=1;
         return 1;
     }
-    int old_pos = -1, new_pos;
+    int isChanged = 0, old_pos = -1, new_pos;
     // First check if the event's post is already present into the top-X
     for (int i=0; i<NUM_TOP_POSTS; i++)
     {
         //print_fine("array[%d]:", i);
-        if (array[i]!=NULL &&  ve->post_id == array[i]->post_id)
+        if (array[i]!=NULL && ve->post_id == array[i]->post_id)
         {
             old_pos = i;
             array[i] = NULL;
             // Left-shift the other elements.
-            for (int j=i, flag=1; flag && j<NUM_TOP_POSTS-1;j++)
+            for (int j=i, flag=1; flag && j<(*array_size)-1;j++)
             {
                 if (array[j+1] != NULL)
                 {
@@ -122,12 +122,12 @@ int check_change(valued_event** array, valued_event* ve, int * array_size)
     // Now insert the new event.
     for (int i=0, notDone=1; notDone && i<NUM_TOP_POSTS; i++)
     {
-        if (array[i]==NULL ||  ve->score > array[i]->score )
+        if (array[i]==NULL || ve->score > array[i]->score )
         {
             //print_fine("right shifting");
             new_pos = i;
             // Right-shift the other elements.
-            for (int j=NUM_TOP_POSTS - 1; j>i; j--)
+            for (int j=(*array_size) - 1; j>i; j--)
             {
                 if (array[j-1] != NULL)
                 {
@@ -141,11 +141,15 @@ int check_change(valued_event** array, valued_event* ve, int * array_size)
         }
     }
     // Check if there was a change in the top-3
-    if(old_pos >= 0 && old_pos != new_pos && old_pos < TOP_NUMBER)
+    // First in case of incomplete top-3 there is a change iff old_pos != new_pos. In fact there is a change iff there is a new post.
+    change = (*array_size < TOP_NUMBER-1) && (old_pos != new_pos);
+    // Second, the top-3 has changed
+    change = change || (new_pos != old_pos && old_pos >= 0 && old_pos < TOP_NUMBER);
+    if(change)
     {
         *array_size=*array_size+1;
     }
-    return (old_pos >= 0 && old_pos != new_pos && old_pos < TOP_NUMBER);
+    return change;
 }
 
 // Create the top-three
