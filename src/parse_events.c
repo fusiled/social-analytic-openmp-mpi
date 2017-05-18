@@ -93,7 +93,7 @@ int check_change(valued_event** array, valued_event* ve, int * array_size)
         *array_size=1;
         return 1;
     }
-    int isChanged = 0, old_pos = -1, new_pos;
+    int change = 0, old_pos = -1, new_pos;
     // First check if the event's post is already present into the top-X
     for (int i=0; i<NUM_TOP_POSTS; i++)
     {
