@@ -2,7 +2,7 @@
 #include "debug_utils.h"
 //include for sorting facilities
 #include "quicksort.h"
-
+#include "top_three.h"
 
 #include <stdlib.h>
 
@@ -13,6 +13,11 @@
 //malloc a valued_list_element and initialize it with the specified fields
 valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
         long user_id, int score, int n_commenters, valued_event_list_element* next);
+
+// PRIVATE function.
+// Create a valued list element from an already existent valued event
+valued_event_list_element* create_valued_list_element_alreadyExistent(valued_event* ve,
+        valued_event_list_element* next);
 
 
 //PRIVATE function
@@ -44,7 +49,7 @@ void clear_event_list(event_list * list)
     //trivial list exploration
     valued_event_list_element * tmp = list->head;
     while(tmp!=NULL)
-    {  
+    {
         valued_event_list_element * tmp2 = tmp->next;
         free(tmp);
         tmp=tmp2;
@@ -83,6 +88,88 @@ void add_element(event_list* list, int post_ts, long post_id, long user_id, int 
     }
     list->size=list->size+1;
     list->head=el;
+}
+
+int add_valued_event_in_order(event_list* list, valued_event* ve)
+{
+    int change = 0, old_pos = -1, new_pos, list_index=0, found=0;
+    valued_event_list_element * current_ve = list->head;
+    valued_event_list_element * previous_ve=NULL;
+    // First check if the element is into the list.
+    while (!found && current_ve)
+    {
+        if (ve->post_id == current_ve->v->post_id)
+        {
+            // Remove the post
+            old_pos = list_index; // Save the old position
+            found = 1; // Notify we have found the post
+            list->size=list->size-1; // We remove an element
+            if (previous_ve != NULL)
+            {
+                previous_ve->next=current_ve->next;
+            }
+            else
+            {
+                // The post was in the first position
+                list->head = current_ve->next;
+            }
+            // Delete the element from memory
+            free(current_ve);
+        }
+        // Increase the position counter
+        list_index++;
+        // Update the pointers, if found==0
+        if (!found)
+        {
+            previous_ve = current_ve;
+            current_ve = current_ve->next;
+        }
+    }
+
+
+    // Now, add the element in the new position
+    current_ve = list->head;
+    previous_ve=NULL;
+    list_index=0;
+    int inserted=0;
+    while(!inserted && current_ve)
+    {
+        if (ve->score > current_ve->v->score)
+        {
+            new_pos=list_index;// Save the new position
+            inserted = 1; // Notify we have inserted the post
+            list->size=list->size+1; // We add an element
+            // Add the element
+            valued_event_list_element* el = create_valued_list_element_alreadyExistent(ve,current_ve);
+            if (el==NULL)
+            {
+                print_error("Cannot allocate a list element");
+                return -1;
+            }
+            // Update the pointer of the previous element
+            if (previous_ve != NULL)
+            {
+                previous_ve->next = el;
+            }
+            else
+            {
+                // The post is inserted in the first position
+                list->head=el;
+            }
+
+        }
+        // Increase the position counter
+        list_index++;
+        // Update the pointers
+        previous_ve = current_ve;
+        current_ve = current_ve->next;
+    }
+    // Check if there was a change in the top-3
+    // First in case of incomplete top-3 there is a change iff old_pos != new_pos. In fact there is a change iff there is a new post.
+    change = (list->size < TOP_NUMBER-1) && (old_pos != new_pos);
+    // Second, the top-3 has changed
+    change = change || (new_pos != old_pos && old_pos >= 0 && old_pos < TOP_NUMBER);
+    return change;
 }
 
 valued_event** get_sorted_array(event_list* list)
@@ -124,6 +211,20 @@ valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
     }
     valued_event* vv = new_valued_event(post_ts,post_id,user_id,score,n_commenters);
     el->v=vv;
+    el->next=next;
+    return el;
+}
+
+valued_event_list_element* create_valued_list_element_alreadyExistent(valued_event* ve,
+        valued_event_list_element* next)
+{
+    valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
+    if(el ==NULL)
+    {
+        print_error("cannot malloc a valued_event_list_element");
+        return NULL;
+    }
+    el->v=ve;
     el->next=next;
     return el;
 }

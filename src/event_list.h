@@ -33,6 +33,10 @@ void clear_event_list(event_list * e_list);
 //Add a new valued_event to the specified event_list
 void add_element(event_list* list, int post_ts, long post_id,long user_id, int score, int n_commenters);
 
+// Add a new already existent valued_event in order into the list. Return true iff 
+// there is a change in the top-3
+int add_valued_event_in_order(event_list* list, valued_event* ve);
+
 
 //malloc a new valued_event with given parameters
 valued_event * new_valued_event(int post_ts, long post_id, long user_id, int score, int n_commenters);
