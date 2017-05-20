@@ -52,7 +52,8 @@ void sort_valued_events(valued_event * array[], int begin, int end)
 
 void sort_valued_events_on_score_with_array(valued_event * array, int begin, int end)
 {
-    int pivot_score, pivot_n_com,pivot_post_id, l, r;
+    int pivot_score, pivot_n_com, l, r;
+    long pivot_post_id;
     if (end > begin) {
        pivot_score = array[begin].score;
        pivot_n_com = array[begin].n_commenters;

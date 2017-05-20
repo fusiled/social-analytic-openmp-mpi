@@ -367,10 +367,16 @@ valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, in
         int index = -1;
         //get element with minimum timestamp
         int score=INT_MIN;
+        int n_commenters=INT_MIN;
+        long post_id=LONG_MAX;
         for(int i=0; i<ve_size;i++)
         {
             int counter = counter_ar[i];
-            if( counter < ve_dim[i] &&  (score < ve_arr[i][counter].score) )
+            if( counter < ve_dim[i] && (
+                score < ve_arr[i][counter].score ||
+                (score==ve_arr[i][counter].score && n_commenters < ve_arr[i][counter].n_commenters) ||
+                (score==ve_arr[i][counter].score && n_commenters < ve_arr[i][counter].n_commenters && post_id>ve_arr[i][counter].post_id))
+            )
             {
                 score = ve_arr[i][counter].score;
                 index = i;

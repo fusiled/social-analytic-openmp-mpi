@@ -162,12 +162,12 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
         final_ve_size++;
       }
     }
-    print_fine("created final_ve. Printing it");
+    sort_valued_events_on_score_with_array(final_ve,0,final_ve_size-1);
+    /*print_fine("created final_ve. Printing it");
     for(int i=0; i<final_ve_size; i++)
     {
       print_valued_event(final_ve+i);
-    }
-    sort_valued_events_on_score_with_array(final_ve,0,final_ve_size-1);
+    }*/
     char changed=0;
     for(int i=0; changed==0 &&  i<3;i++)
     {
@@ -216,44 +216,50 @@ char * to_string_top_three(valued_event * tt, int ts)
   for(int i=0; i<TOP_NUMBER; i++)
   {
     strcat(output,",");
-    if(tt[i].post_id==-1)
+    if(tt[i].score<=0)
     {
-      strcat(output,UNDEF_SIGN);
+      strcat(output,"-,-,-,-");
     }
-    else
-    {
-      ltoa(tt[i].post_id,buf);
-      strcat(output,buf);
-    }
-    strcat(output,",");
-    if(tt[i].user_id==-1)
-    {
-      strcat(output,UNDEF_SIGN);
-    }
-    else
-    {
-      ltoa(tt[i].user_id,buf);
-      strcat(output,buf);
-    }
-    strcat(output, ",");
-    if(tt[i].score==-1)
-    {
-      strcat(output,UNDEF_SIGN);
-    }
-    else
-    {
-      itoa(tt[i].score,buf);
-      strcat(output,buf);
-    }
-    strcat(output, ",");
-    if(tt[i].score==-1)
-    {
-      strcat(output,UNDEF_SIGN);
-    }
-    else
-    {
-      itoa(tt[i].n_commenters,buf);
-      strcat(output,buf);
+    else{
+      if(tt[i].post_id==-1)
+      {
+        strcat(output,UNDEF_SIGN);
+      }
+      else
+      {
+        ltoa(tt[i].post_id,buf);
+        strcat(output,buf);
+      }
+      strcat(output,",");
+      if(tt[i].user_id==-1)
+      {
+        strcat(output,UNDEF_SIGN);
+      }
+      else
+      {
+        ltoa(tt[i].user_id,buf);
+        strcat(output,buf);
+      }
+      strcat(output, ",");
+      if(tt[i].score==-1)
+      {
+        strcat(output,UNDEF_SIGN);
+      }
+      else
+      {
+        itoa(tt[i].score,buf);
+        strcat(output,buf);
+      }
+      strcat(output, ",");
+      if(tt[i].score==-1)
+      {
+        strcat(output,UNDEF_SIGN);
+      }
+      else
+      {
+        itoa(tt[i].n_commenters,buf);
+        strcat(output,buf);
+      }
     }
   }
   return output;
