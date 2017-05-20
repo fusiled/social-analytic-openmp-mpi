@@ -2,11 +2,9 @@
 
 
 #include "debug_utils.h"
-#include "top_three.h"
 #include "global_variables.h"
 
 #include "event_list.h"
-#include "parse_events.h"
 
 #include "quicksort.h"
 #include "utils.h"
@@ -213,7 +211,7 @@ char * to_string_top_three(valued_event * tt, int ts)
   output[0]='\0';
   itoa(ts, buf);
   strcat(output,buf);
-  for(int i=0; i<TOP_NUMBER; i++)
+  for(int i=0; i<3; i++)
   {
     strcat(output,",");
     if(tt[i].score<=0)

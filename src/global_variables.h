@@ -12,4 +12,6 @@ extern const int VALUED_EVENT_TRANSMISSION_TAG;
 extern const int VALUED_EVENT_PROBE_TAG;
 extern const int VALUED_EVENT_TS_TAG;
 
+extern const int TOP_NUMBER;
+
 #endif

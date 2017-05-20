@@ -2,12 +2,14 @@
 #include "debug_utils.h"
 //include for sorting facilities
 #include "quicksort.h"
-#include "top_three.h"
 
 #include <stdlib.h>
 
 #include <limits.h>
 
+#include "global_variables.h"
+
+extern const int TOP_NUMBER;
 
 //PRIVATE function.
 //malloc a valued_list_element and initialize it with the specified fields

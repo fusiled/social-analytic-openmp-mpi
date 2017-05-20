@@ -10,8 +10,6 @@
 #include "global_variables.h"
 #include "output_producer.h"
 
-#include "top_three.h"
-
 
 //library includes
 #include <mpi.h>

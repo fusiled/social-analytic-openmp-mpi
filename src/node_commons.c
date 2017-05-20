@@ -8,7 +8,6 @@
 
 #include "global_variables.h"
 #include "debug_utils.h"
-#include "top_three.h"
 #include "event_list.h"
 
 extern const int MPI_MASTER;
