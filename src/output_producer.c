@@ -27,6 +27,8 @@ extern const int VALUED_EVENT_TRANSMISSION_TAG;
 extern const int VALUED_EVENT_PROBE_TAG;
 extern const int VALUED_EVENT_TS_TAG;
 
+extern const int TOP_NUMBER;
+
 char * to_string_top_three(valued_event * tt, int ts);
 
 int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_valued_event, int start_ts)
@@ -49,8 +51,8 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
       active_workers--;
     }
   }
-  valued_event current_top_three[3];
-  for(int i=0; i<3;i++)
+  valued_event current_top_three[TOP_NUMBER];
+  for(int i=0; i<TOP_NUMBER;i++)
   {
      valued_event * ve_buf=new_valued_event(-1,-1,-1,-1,-1);
     current_top_three[i]=*ve_buf;
@@ -67,8 +69,8 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
 
   while( worker_terminated_mask < (1<<group_size-1)-1 && active_workers>0 )
   {
-    //check every one week
-    if(ts%(24*60*60*7)==0)
+    //check every 28 days
+    if(ts%(24*60*60*7*4)==0)
     {
       print_fine("Master is handling timestamp %d", ts);
     } 
@@ -139,14 +141,14 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     {
       print_valued_event(ve_ar+i);
     }*/
-    valued_event * final_ve = malloc(sizeof(valued_event)*(3+global_ve_size));
-    memcpy(final_ve,current_top_three,sizeof(valued_event)*3);
-    int final_ve_size=3;
+    valued_event * final_ve = malloc(sizeof(valued_event)*(TOP_NUMBER+global_ve_size));
+    memcpy(final_ve,current_top_three,sizeof(valued_event)*TOP_NUMBER);
+    int final_ve_size=TOP_NUMBER;
     //merge current_top_three and ve_ar into final_ve
     for(int i=0; i<global_ve_size; i++ )
     {
       char changed=0;
-      for(int j=0; changed==0 && j<3;j++)
+      for(int j=0; changed==0 && j<TOP_NUMBER;j++)
       {
         if(final_ve[j].post_id==ve_ar[i].post_id)
         {
@@ -167,7 +169,7 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
       print_valued_event(final_ve+i);
     }*/
     char changed=0;
-    for(int i=0; changed==0 &&  i<3;i++)
+    for(int i=0; changed==0 &&  i<TOP_NUMBER;i++)
     {
       if(final_ve[i].post_id!=current_top_three[i].post_id ||
         final_ve[i].score!=current_top_three[i].score ||
@@ -183,7 +185,7 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
       //print_info("writing %s to output_line", output_line);
       fprintf(out_fp, "%s\n", output_line);
       free(output_line);
-      memcpy(current_top_three,final_ve,sizeof(valued_event)*3);
+      memcpy(current_top_three,final_ve,sizeof(valued_event)*TOP_NUMBER);
     }
     free(ve_ar);
     free(final_ve);
@@ -211,7 +213,7 @@ char * to_string_top_three(valued_event * tt, int ts)
   output[0]='\0';
   itoa(ts, buf);
   strcat(output,buf);
-  for(int i=0; i<3; i++)
+  for(int i=0; i<TOP_NUMBER; i++)
   {
     strcat(output,",");
     if(tt[i].score<=0)

@@ -29,6 +29,7 @@ extern const int POST_NUMBER_TAG;
 extern const int POST_EXCHANGE_TAG;
 extern const int VALUED_EVENT_NUMBER_TAG;
 extern const int VALUED_EVENT_TRANSMISSION_TAG;
+extern const int TOP_NUMBER;
 
 
 //receive a post from MPI_MASTER and return the associated post_block
@@ -174,10 +175,10 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		if(send_buf_count>0)
 		{
 			sort_valued_events_on_score_with_array(send_buf, 0, send_buf_count-1);
-			if(send_buf_count>3)
+			if(send_buf_count>TOP_NUMBER)
 			{
-				send_buf = realloc(send_buf,sizeof(valued_event)*3);
-				send_buf_count=3;
+				send_buf = realloc(send_buf,sizeof(valued_event)*TOP_NUMBER);
+				send_buf_count=TOP_NUMBER;
 				if(send_buf==NULL)
 				{
 					print_error("Cannot realloc send_buf in worker %d", worker_id);
