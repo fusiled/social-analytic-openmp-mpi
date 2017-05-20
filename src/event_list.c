@@ -337,3 +337,51 @@ valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, in
     *out_size_ref=out_size;
     return out_ref;
 }
+
+
+
+valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
+{
+    //order arrays in ve_arr
+    /*#pragma omp parallel for
+    for (int i = 0; i < ve_size; i++)
+    {
+        sort_valued_events_on_score_with_array(ve_arr[i],0,ve_dim[i]-1);
+    }*/
+    //malloc space
+    int out_size=0;
+    for(int i=0; i<ve_size;i++)
+    {
+        out_size = out_size + ve_dim[i];
+    }
+    valued_event * out_ref = malloc(sizeof(valued_event)*out_size);
+    if(out_ref==NULL)
+    {
+        print_error("cannot malloc out_ref in merge_valued_event_array");
+        return NULL;
+    }
+    int * counter_ar = calloc(sizeof(int),ve_size);
+    int out_counter=0;
+    while(check_if_quit(ve_dim,counter_ar,ve_size)==0 && out_counter < out_size)
+    {
+        int index = -1;
+        //get element with minimum timestamp
+        int score=INT_MIN;
+        for(int i=0; i<ve_size;i++)
+        {
+            int counter = counter_ar[i];
+            if( counter < ve_dim[i] &&  (score < ve_arr[i][counter].score) )
+            {
+                score = ve_arr[i][counter].score;
+                index = i;
+            }
+        }
+        //save selected element
+        out_ref[out_counter]=ve_arr[index][ counter_ar[index] ];
+        counter_ar[index] = counter_ar[index]+1;
+        out_counter++;
+    }
+    free(counter_ar);
+    *out_size_ref=out_size;
+    return out_ref;
+}

@@ -9,4 +9,7 @@
 //is saved at out_size
 top_three ** parse_events(valued_event* events_array, int size, int* out_size);
 
+
+top_three* create_top_three_with_array(valued_event* ve, int ts);
+
 #endif

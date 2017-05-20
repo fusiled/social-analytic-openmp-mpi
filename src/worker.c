@@ -14,11 +14,15 @@
 
 
 #include "parse_events.h"
+#include "quicksort.h"
+
 
 #include <stdlib.h>
 
 #include <mpi.h>
 #include <omp.h>
+
+#include <string.h>
 
 
 #define MAX_EVENT_KEEPER_SIZE 2048
@@ -127,32 +131,72 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	{
 		print_error("worker %d cannot malloc out_ar", worker_id);
 	}
-	//simple parallel section. Free memory while sending the valued_event array
-	#pragma omp parallel sections
+	print_fine("freeing memory");
+	//free main_keeper stuff
+	for(int i=0; i<main_keeper_size; i++)
 	{
-		#pragma omp section
+		for(int j=0; j<main_keeper_dim[i];j++)
 		{
-			print_info("Worker %d is sending its valued_events", worker_id);
-			MPI_Send(&out_size,1,MPI_INT,MPI_MASTER, VALUED_EVENT_NUMBER_TAG*worker_id, MPI_COMM_WORLD);
-			MPI_Send(out_ar,out_size,mpi_valued_event,MPI_MASTER, VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
-			free(out_ar);
+			clear_valued_event(main_keeper[i][j]);
 		}
-		#pragma omp section
+		free(main_keeper[i]);
+	}
+	free(main_keeper);
+	free(main_keeper_dim);
+	//simple parallel section. Free memory while sending the valued_event array
+	int counter=0;
+	int remaining_events=out_size;
+	char stop=0;
+	//singal for correct probing
+	unsigned int probe= (counter<out_size) ? 1 : 0;
+	MPI_Send(&probe,1,MPI_UNSIGNED,MPI_MASTER,VALUED_EVENT_PROBE_TAG*worker_id,MPI_COMM_WORLD);
+	print_fine("first element of worker %d has ts: %d", worker_id, out_ar[0].post_ts);
+	//print_valued_event(out_ar);
+	while(counter<out_size)
+	{
+		MPI_Status ret;
+		int used_elements=0;
+		int master_ts;
+		//print_fine("Worker %d is at barrier", worker_id);
+		//MPI_Recv(&master_ts, 1,MPI_INT, MPI_MASTER, VALUED_EVENT_TS_TAG*worker_id, MPI_COMM_WORLD, &ret);
+		MPI_Bcast(&master_ts,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
+		//print_fine("Wroker %d got ts: %d", worker_id,master_ts);
+		int send_buf_count=0;
+		while(counter<out_size && out_ar[counter].post_ts<master_ts)
 		{
-			print_fine("freeing memory");
-			//free main_keeper stuff
-			for(int i=0; i<main_keeper_size; i++)
+			counter++;
+		}
+		for(int i=counter; i<out_size && out_ar[i].post_ts==master_ts; i++)
+		{
+			send_buf_count++;
+		}
+		//print_fine("Worker %d had buf count of %d for master_ts=%d", worker_id,send_buf_count, master_ts);
+		valued_event * send_buf = malloc(sizeof(valued_event)*send_buf_count);
+		memcpy(send_buf,out_ar+counter,sizeof(valued_event)*send_buf_count);
+		MPI_Send(&send_buf_count,1,MPI_INT,MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
+		if(send_buf_count>0)
+		{
+			sort_valued_events_on_score_with_array(send_buf, 0, send_buf_count-1);
+			if(send_buf_count>3)
 			{
-				for(int j=0; j<main_keeper_dim[i];j++)
+				send_buf = realloc(send_buf,sizeof(valued_event)*3);
+				send_buf_count=3;
+				if(send_buf==NULL)
 				{
-					clear_valued_event(main_keeper[i][j]);
+					print_error("Cannot realloc send_buf in worker %d", worker_id);
 				}
 			}
-			free(main_keeper);
-			free(main_keeper_dim);
+			MPI_Send(send_buf,send_buf_count,mpi_valued_event,MPI_MASTER,VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+			//print_fine("Worker %d sent a valued_event array %d big for ts: %d", worker_id, send_buf_count, master_ts);
 		}
+		free(send_buf);
+		counter=counter+send_buf_count;
 	}
-	MPI_Barrier(MPI_COMM_WORLD);
+	int stop_worker_request_code=-1;
+	int useless_buf;
+	MPI_Bcast(&useless_buf,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
+	MPI_Send(&stop_worker_request_code,1,MPI_INT, MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
+	free(out_ar);
 	print_info("Worker %d terminating successfully (:", worker_id);
 	return 0;
 }

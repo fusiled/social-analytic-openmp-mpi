@@ -23,7 +23,7 @@ SRC = utils.c global_variables.c reply_type.c post_block.c debug_utils.c \
 CC = mpicc
 
 #your flags
-CFLAGS=  -fopenmp -I./$(SRC_DIR) -g -D_GNU_SOURCE -D_XOPEN_SOURCE
+CFLAGS= -fsanitize=address -fno-omit-frame-pointer -fopenmp -I./$(SRC_DIR) -g -D_GNU_SOURCE -D_XOPEN_SOURCE
 
 
 #executables will be saved here

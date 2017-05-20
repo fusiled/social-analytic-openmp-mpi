@@ -179,3 +179,22 @@ top_three* create_top_three(valued_event** ve, int ts)
     top_three* tt = new_top_three(ts, post_id, user_id, post_score, n_commenters);
     return tt;
 }
+
+
+// Create the top-three
+top_three* create_top_three_with_array(valued_event* ve, int ts)
+{
+    // Define the arrays
+    long post_id[TOP_NUMBER], user_id[TOP_NUMBER];
+    int post_score[TOP_NUMBER], n_commenters[TOP_NUMBER];
+    for(int i=0; i<TOP_NUMBER; i++)
+    {
+        post_id[i] = ve[i].post_id;
+        post_score[i] = ve[i].score;
+        // Now the user_id and the n_commenters are empty
+        user_id[i] = ve[i].user_id;
+        n_commenters[i] = ve[i].n_commenters;
+    }
+    top_three* tt = new_top_three(ts, post_id, user_id, post_score, n_commenters);
+    return tt;
+}

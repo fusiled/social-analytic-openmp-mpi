@@ -93,7 +93,7 @@ comment * process_comment_line(char * line)
     comm_replied = atol(buf[COMMENT_COMMENT_REPLIED]);
     post_replied = atol(buf[COMMENT_POST_REPLIED]);
     //free the buf array (see utils.h)
-    del_double_ref_array( (void **)buf, POST_INPUT_ENTRIES);
+    del_double_ref_array( (void **)buf, COMMENT_INPUT_ENTRIES);
     if(comm_replied!=0)
     {
         reply_id = comm_replied;
@@ -156,6 +156,7 @@ post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
     	{
     		memcpy(post_array+return_read_lines,post_buf, sizeof(post));
     	}
+        del_post(post_buf);
     	return_read_lines++;
     }
     if (line)
@@ -219,6 +220,7 @@ comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
         {
             memcpy(comm_array+return_read_lines,comm_buf, sizeof(comment));
         }
+        del_comment(comm_buf);
         return_read_lines++;
     }
     if (line)

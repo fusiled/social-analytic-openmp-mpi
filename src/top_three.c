@@ -6,7 +6,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-
+#include <assert.h>
 
 #define UNDEF_SIGN "-"
 
@@ -25,6 +25,8 @@ top_three * new_top_three(int ts, long p_post_id[TOP_NUMBER],
 	memcpy(ret_ref->user_id, p_user_id, sizeof(long)*TOP_NUMBER);
 	memcpy(ret_ref->post_score, p_post_score, sizeof(int)*TOP_NUMBER);
 	memcpy(ret_ref->n_commenters, p_n_commenters, sizeof(int)*TOP_NUMBER);
+	//print_top_three(ret_ref);
+	assert( (ret_ref->ts)==ts);
 	return ret_ref;
 }
 
@@ -83,7 +85,7 @@ char * to_string_tuple_top_three(top_three * tt)
 	{
 		print_error("Cannot malloc array for to_string_tuple_top_three");
 	}
-	char buf[256];
+	char buf[1024];
 	output[0]='\0';
 	itoa(tt->ts, buf);
 	strcat(output,buf);

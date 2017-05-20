@@ -55,6 +55,7 @@ void del_comment_list(comment_list * com_list)
 		del_list_entry(cur);
 		cur = buf;
 	}
+	free(com_list);
 }
 
 //constructor for a new list_entry with the passed comment

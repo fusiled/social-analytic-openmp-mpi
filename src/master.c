@@ -18,6 +18,15 @@
 #include <omp.h>
 #include <time.h>
 #include <string.h>
+#include <limits.h>
+
+
+#if defined(__clang__) || defined (__GNUC__)
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
 
 #define MAX_OUTPUT_NAME_SIZE 256
 
@@ -52,7 +61,7 @@ void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int no
 
 
 //process to post file and send block of posts (at most big bucket_size) to the workers
-void process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size);
+int process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size);
 
 
 //update the node_id. This is used to decide to who send a bucket of posts.
@@ -108,13 +117,13 @@ int master_execution(int argc, char * argv[], int group_size, int * n_threads_ar
   print_fine("Master is processing the comments...");
   build_post_to_comment_list_hashmap(argv[3]);
   print_info("Master processed commments... Now It begins the post_block transmission phase");
-  process_posts_and_transmit(argv[2], group_size, bucket_size);
+  int start_ts = process_posts_and_transmit(argv[2], group_size, bucket_size);
 
   //pclh is no longer needed
   kh_destroy(post_comment_list_hashmap, pclh);
   //from output_producer.h
   print_info("Master begins to receive events from workers");
-  ret_val = produce_output_file(output_file_name,group_size,mpi_valued_event);
+  ret_val = produce_output_file(output_file_name,group_size,mpi_valued_event, start_ts);
   if(ret_val<0)
   {
     print_error("cannot produce output_file");
@@ -193,7 +202,7 @@ void transmit_post_block_array_to_node(post * post_ar,int * post_ar_size, int no
 }
 
 
-
+ATTRIBUTE_NO_SANITIZE_ADDRESS
 void build_post_to_comment_list_hashmap(char * path_to_comment_file)
 {
   FILE * comm_fp = fopen(path_to_comment_file,"r"); 
@@ -267,15 +276,20 @@ void build_post_to_comment_list_hashmap(char * path_to_comment_file)
 }
 
 
-void process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size)
+int process_posts_and_transmit(char * path_to_post_file, int group_size, int bucket_size)
 {
   FILE * post_fp = fopen(path_to_post_file,"r");
   int * read_lines;
+  int first_ts=INT_MAX;
   read_lines = malloc(sizeof(int));
   post * post_ar = parse_post(post_fp,bucket_size, read_lines);
   int node_id=0;
   while(post_ar!=NULL)
   {
+    if(post_ar[0].ts < first_ts)
+    {
+      first_ts=post_ar[0].ts;
+    }
     node_id=update_node_id(node_id, group_size);
     transmit_post_block_array_to_node(post_ar, read_lines, node_id);
     del_post(post_ar);
@@ -292,4 +306,5 @@ void process_posts_and_transmit(char * path_to_post_file, int group_size, int bu
     MPI_Send(&STOP_POST_TRANSMISSION_SIGNAL, 1, MPI_INT, i, POST_NUMBER_TAG*i, MPI_COMM_WORLD);
   }
   print_info("Signaled the end of post transmission to all the nodes");
+  return first_ts;
 }

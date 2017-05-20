@@ -59,6 +59,9 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
 valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
 
 
+valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
+
+
 //it frees the valued_event ve
 void clear_valued_event(valued_event* ve);
 
