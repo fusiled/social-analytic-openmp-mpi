@@ -15,15 +15,14 @@ SRC_DIR=src
 
 #source file EXCEPT MAIN FILES here
 SRC = utils.c global_variables.c reply_type.c post_block.c debug_utils.c \
-      top_three.c comment.c comment_list.c post.c parser.c node_commons.c \
+      comment.c comment_list.c post.c parser.c node_commons.c \
       output_producer.c master.c worker.c main.c \
-      event_generator.c quicksort.c process_events.c event_list.c top_three_list.c \
-      parse_events.c
+      event_generator.c quicksort.c process_events.c event_list.c \
 #your compiler
 CC = mpicc
 
 #your flags
-CFLAGS= -fsanitize=address -fno-omit-frame-pointer -fopenmp -I./$(SRC_DIR) -g -D_GNU_SOURCE -D_XOPEN_SOURCE
+CFLAGS= -fopenmp -I./$(SRC_DIR) -g -D_GNU_SOURCE -D_XOPEN_SOURCE
 
 
 #executables will be saved here
