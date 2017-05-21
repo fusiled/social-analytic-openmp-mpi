@@ -22,18 +22,18 @@ event ** generate_events(post_block * post, int* event_size)
    // Initialize the index for the events
    j=0;
    // Generate the events for the post
-   events[j] = create_event(post_id,post->post_ts,post->user_id,CREATION,0);
+   events[j] = create_event(post_id,post->post_ts,post->post_ts,post->user_id,CREATION,0);
    j++;
    for(int z=0;z<CREATION;z++) {
-       events[j] = create_event(post_id,(post->post_ts)+ONEDAY*(z+1),post->user_id,DECREMENT,0);
+       events[j] = create_event(post_id,post->post_ts,(post->post_ts)+ONEDAY*(z+1),post->user_id,DECREMENT,0);
        j++;
    }
    // Generate the events for each comment
    for (i=0;i<size-1;i++) {
-       events[j] = create_event(post_id,(post->comment_ts)[i],(post->comment_user_id)[i],CREATION,1);
+       events[j] = create_event(post_id,post->post_ts,(post->comment_ts)[i],(post->comment_user_id)[i],CREATION,1);
        j++;
        for(int z=0;z<CREATION;z++) {
-           events[j] = create_event(post_id,(post->comment_ts)[i]+ONEDAY*(z+1),(post->comment_user_id)[i],DECREMENT,1);
+           events[j] = create_event(post_id,post->post_ts,(post->comment_ts)[i]+ONEDAY*(z+1),(post->comment_user_id)[i],DECREMENT,1);
            j++;
        }
    }
@@ -48,13 +48,14 @@ event ** sort_generated_events(event ** e, int size)
     return e;
 }
 
-event* create_event(long post_id, int ts, long user_id, char type, char is_comment) {
+event* create_event(long post_id, int post_ts, int ts, long user_id, char type, char is_comment) {
     event* e = malloc(sizeof(event));
     if (e==NULL)
     {
         print_error("Cannot create event");
     }
     e->post_id=post_id;
+    e->post_ts=post_ts;
     e->user_id=user_id;
     e->timestamp=ts;
     e->type=type;

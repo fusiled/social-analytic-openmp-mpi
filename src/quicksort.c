@@ -33,11 +33,11 @@ void sort_valued_events(valued_event * array[], int begin, int end)
 {
     int pivot, l, r;
     if (end > begin) {
-       pivot = array[begin]->post_ts;
+       pivot = array[begin]->valued_event_ts;
        l = begin + 1;
        r = end+1;
        while(l < r)
-          if (array[l]->post_ts < pivot)
+          if (array[l]->valued_event_ts < pivot)
              l++;
           else {
              r--;
@@ -52,18 +52,17 @@ void sort_valued_events(valued_event * array[], int begin, int end)
 
 void sort_valued_events_on_score_with_array(valued_event * array, int begin, int end)
 {
-    int pivot_score, pivot_n_com, l, r;
-    long pivot_post_id;
+    int pivot_score, pivot_lc_ts, l, r, pivot_ve_ts;
     if (end > begin) {
        pivot_score = array[begin].score;
-       pivot_n_com = array[begin].n_commenters;
-       pivot_post_id = array[begin].post_id;
+       pivot_ve_ts = array[begin].valued_event_ts;
+       pivot_lc_ts = array[begin].last_comment_ts;
        l = begin + 1;
        r = end+1;
        while(l < r)
           if (array[l].score > pivot_score ||
-           (array[l].score==pivot_score && array[l].n_commenters > pivot_n_com) ||
-           (array[l].score==pivot_score && array[l].n_commenters == pivot_n_com && array[l].post_id<pivot_post_id) )
+           (array[l].score==pivot_score && array[l].valued_event_ts < pivot_ve_ts) ||
+           (array[l].score==pivot_score && array[l].valued_event_ts < pivot_ve_ts && array[l].last_comment_ts < pivot_lc_ts) )
              l++;
           else {
              r--;

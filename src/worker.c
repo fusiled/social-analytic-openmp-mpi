@@ -141,6 +141,11 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	}
 	free(main_keeper);
 	free(main_keeper_dim);
+	print_fine("out_ar ordered on ts");
+	for(int i=0; i<out_size; i++)
+	{
+		print_valued_event(out_ar+i);
+	}
 	//simple parallel section. Free memory while sending the valued_event array
 	int counter=0;
 	int remaining_events=out_size;
@@ -148,7 +153,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	//singal for correct probing
 	unsigned int probe= (counter<out_size) ? 1 : 0;
 	MPI_Send(&probe,1,MPI_UNSIGNED,MPI_MASTER,VALUED_EVENT_PROBE_TAG*worker_id,MPI_COMM_WORLD);
-	print_fine("first element of worker %d has ts: %d", worker_id, out_ar[0].post_ts);
+	print_fine("first element of worker %d has ts: %d", worker_id, out_ar[0].valued_event_ts);
 	//print_valued_event(out_ar);
 	while(counter<out_size)
 	{
@@ -160,11 +165,11 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		MPI_Bcast(&master_ts,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
 		//print_fine("Wroker %d got ts: %d", worker_id,master_ts);
 		int send_buf_count=0;
-		while(counter<out_size && out_ar[counter].post_ts<master_ts)
+		while(counter<out_size && out_ar[counter].valued_event_ts<master_ts)
 		{
 			counter++;
 		}
-		for(int i=counter; i<out_size && out_ar[i].post_ts==master_ts; i++)
+		for(int i=counter; i<out_size && out_ar[i].valued_event_ts==master_ts; i++)
 		{
 			send_buf_count++;
 		}

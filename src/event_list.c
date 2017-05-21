@@ -13,8 +13,9 @@ extern const int TOP_NUMBER;
 
 //PRIVATE function.
 //malloc a valued_list_element and initialize it with the specified fields
-valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
-        long user_id, int score, int n_commenters, valued_event_list_element* next);
+valued_event_list_element* create_valued_list_element(int valued_event_ts,int post_ts,
+ long post_id,long user_id, int score, int n_commenters, int last_comment_ts,
+ valued_event_list_element* next);
 
 // PRIVATE function.
 // Create a valued list element from an already existent valued event
@@ -62,27 +63,29 @@ void clear_event_list(event_list * list)
 
 
 
-valued_event * new_valued_event(int post_ts, long post_id, long user_id, int score, int n_commenters)
+valued_event * new_valued_event(int valued_event_ts,int post_ts, long post_id,long user_id, int score, int n_commenters, int last_comment_ts)
 {
     valued_event * ret_ref = malloc(sizeof(valued_event));
     if(ret_ref==NULL)
     {
         print_error("Cannot malloc valued_event");
     }
+    ret_ref->valued_event_ts=valued_event_ts;
     ret_ref->post_ts=post_ts;
     ret_ref->post_id=post_id;
     ret_ref->user_id=user_id;
     ret_ref->score=score;
     ret_ref->n_commenters = n_commenters;
+    ret_ref->last_comment_ts=last_comment_ts;
     return ret_ref;
 
 }
 
 
-void add_element(event_list* list, int post_ts, long post_id, long user_id, int score, int n_commenters)
+void add_element(event_list* list, int valued_event_ts,int post_ts, long post_id,long user_id, int score, int n_commenters, int last_comment_ts)
 {
     //trivial list addition
-    valued_event_list_element* el = create_valued_list_element(post_ts, post_id, user_id, score, n_commenters,list->head);
+    valued_event_list_element* el = create_valued_list_element(valued_event_ts, post_ts, post_id, user_id, score, n_commenters,last_comment_ts, list->head);
     if (el==NULL)
     {
         print_error("Cannot allocate a list element");
@@ -203,7 +206,8 @@ void clear_valued_event(valued_event* ve)
     free(ve);
 }
 
-valued_event_list_element* create_valued_list_element(int post_ts, long post_id, long user_id, int score, int n_commenters, valued_event_list_element* next)
+valued_event_list_element* create_valued_list_element(int valued_event_ts,int post_ts, long post_id,
+    long user_id, int score, int n_commenters, int last_comment_ts, valued_event_list_element* next)
 {
     valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
     if (el==NULL)
@@ -211,7 +215,7 @@ valued_event_list_element* create_valued_list_element(int post_ts, long post_id,
         print_error("cannot malloc a valued_event_list_element");
         return NULL;
     }
-    valued_event* vv = new_valued_event(post_ts,post_id,user_id,score,n_commenters);
+    valued_event* vv = new_valued_event(valued_event_ts,post_ts,post_id,user_id,score,n_commenters,last_comment_ts);
     el->v=vv;
     el->next=next;
     return el;
@@ -239,7 +243,8 @@ void destroy_valued_list_element(valued_event_list_element* el)
 
 void print_valued_event(valued_event * ve)
 {
-    print_msg("VALUED_EL","adr: %p, post_ts: %d, post_id: %ld, score: %d",ve, ve->post_ts,ve->post_id, ve->score);
+    print_msg("VALUED_EL","adr: %p, ve_ts: %d, post_ts: %d, post_id: %ld, score: %d, n_commenters: %d, last_comment_ts: %d",
+        ve,ve->valued_event_ts, ve->post_ts,ve->post_id, ve->score, ve->n_commenters, ve->last_comment_ts);
 }
 
 
@@ -282,9 +287,9 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
         for(int i=0; i<ve_size;i++)
         {
             int counter = counter_ar[i];
-            if( counter < ve_dim[i] && ts > ve_arr[i][counter]->post_ts )
+            if( counter < ve_dim[i] && ts > ve_arr[i][counter]->valued_event_ts )
             {
-                ts = ve_arr[i][counter]->post_ts;
+                ts = ve_arr[i][counter]->valued_event_ts;
                 index = i;
             }
         }
@@ -324,9 +329,9 @@ valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, in
         for(int i=0; i<ve_size;i++)
         {
             int counter = counter_ar[i];
-            if( counter < ve_dim[i] &&  ts > ve_arr[i][counter].post_ts )
+            if( counter < ve_dim[i] &&  ts > ve_arr[i][counter].valued_event_ts )
             {
-                ts = ve_arr[i][counter].post_ts;
+                ts = ve_arr[i][counter].valued_event_ts;
                 index = i;
             }
         }
@@ -369,18 +374,20 @@ valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, in
         int index = -1;
         //get element with minimum timestamp
         int score=INT_MIN;
-        int n_commenters=INT_MIN;
-        long post_id=LONG_MAX;
+        int post_ts=INT_MAX;
+        long last_comment_ts=INT_MAX;
         for(int i=0; i<ve_size;i++)
         {
             int counter = counter_ar[i];
             if( counter < ve_dim[i] && (
                 score < ve_arr[i][counter].score ||
-                (score==ve_arr[i][counter].score && n_commenters < ve_arr[i][counter].n_commenters) ||
-                (score==ve_arr[i][counter].score && n_commenters < ve_arr[i][counter].n_commenters && post_id>ve_arr[i][counter].post_id))
+                (score==ve_arr[i][counter].score && post_ts > ve_arr[i][counter].post_ts) ||
+                (score==ve_arr[i][counter].score && post_ts == ve_arr[i][counter].post_ts && last_comment_ts > ve_arr[i][counter].last_comment_ts))
             )
             {
                 score = ve_arr[i][counter].score;
+                post_ts = ve_arr[i][counter].post_ts;
+                last_comment_ts = ve_arr[i][counter].last_comment_ts;
                 index = i;
             }
         }

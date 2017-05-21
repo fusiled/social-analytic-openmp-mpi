@@ -54,7 +54,7 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
   valued_event current_top_three[TOP_NUMBER];
   for(int i=0; i<TOP_NUMBER;i++)
   {
-     valued_event * ve_buf=new_valued_event(-1,-1,-1,-1,-1);
+     valued_event * ve_buf=new_valued_event(-1,-1,-1,-1,-1,-1,-1);
     current_top_three[i]=*ve_buf;
     clear_valued_event(ve_buf);
   }
@@ -137,10 +137,10 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     free(ve_matrix);
     free(ve_matrix_dim);
     //print_fine("master ve_ar for ts: %d", ts);
-    /*for(int i=0; i<global_ve_size;i++)
+    for(int i=0; i<global_ve_size;i++)
     {
       print_valued_event(ve_ar+i);
-    }*/
+    }
     valued_event * final_ve = malloc(sizeof(valued_event)*(TOP_NUMBER+global_ve_size));
     memcpy(final_ve,current_top_three,sizeof(valued_event)*TOP_NUMBER);
     int final_ve_size=TOP_NUMBER;

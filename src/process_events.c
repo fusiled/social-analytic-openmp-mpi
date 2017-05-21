@@ -6,6 +6,8 @@
 
 #include <stdlib.h>
 
+#include <limits.h>
+
 int update_score(int score, char action_type, char is_comment);
 
 int update_nCommenters(int nCommenters, long * commenters_ar, long user_id);
@@ -25,6 +27,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
         //create n_commenters array to keep trace of the number of commenters
         //print_info("comment_ar_size: %d", pb[i]->comment_ar_size);
         long * n_commenters_ar=NULL;
+        int last_comment_ts=INT_MAX;
         if( pb[i]->comment_ar_size > 0)
         {
             n_commenters_ar = malloc( sizeof(long)*(pb[i]->comment_ar_size) ) ;
@@ -40,6 +43,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
             //print_event(ee[j]);
             if (ee[j]->is_comment && ee[j]->type == CREATION )
             {
+                last_comment_ts=ee[j]->timestamp;
                 nCommenters = update_nCommenters(nCommenters,n_commenters_ar,ee[j]->user_id);
             }
             if (score <= 0)
@@ -47,7 +51,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
                 break;
             }
             //print_info("adding element with score %d and n_commenters %d", score, nCommenters);
-            add_element(e_list,ee[j]->timestamp, ee[j]->post_id, pb[i]->user_id , score, nCommenters);
+            add_element(e_list,ee[j]->timestamp,ee[j]->post_ts, ee[j]->post_id, pb[i]->user_id , score, nCommenters,last_comment_ts);
         }
         //print_info("pre free");
         free(n_commenters_ar);
