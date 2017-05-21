@@ -31,7 +31,7 @@ const int COMMENT_POST_REPLIED = 6;
 
 const char * POST_DELIMITERS = "|";
 const char * COMMENT_DELIMITERS = "|";
-const char * TIME_FORMAT_STRING = "%Y-%m-%dT%H:%M:%S";
+const char * TIME_FORMAT_STRING = "%FT%T";
 const int POST_INPUT_ENTRIES = 5;
 const int COMMENT_INPUT_ENTRIES = 7;
 

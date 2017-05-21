@@ -119,51 +119,59 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
 	#pragma omp barrier
+	MPI_Barrier(MPI_COMM_WORLD);
 	free(n_posts);
 	print_info("Worker %d received the stop signal for post trasmission. main_keeper_size: %d", worker_id, main_keeper_size);
 	
+	valued_event * out_ar;
 	int out_size;
-	valued_event * out_ar = merge_valued_event_array_with_ref(main_keeper, main_keeper_dim, main_keeper_size, &out_size);
-	print_fine("worker %d produced a valued event array %d big.",worker_id, out_size);
-	if(out_ar==NULL)
+	if(main_keeper_size>0)
 	{
-		print_error("worker %d cannot malloc out_ar", worker_id);
+		out_ar = merge_valued_event_array_with_ref(main_keeper, main_keeper_dim, main_keeper_size, &out_size);
+		print_fine("worker %d produced a valued event array %d big.",worker_id, out_size);
+		if(out_ar==NULL)
+		{
+			print_error("worker %d cannot malloc out_ar", worker_id);
+		}
+	}
+	else
+	{
+		out_ar=NULL;
+		out_size=0;
 	}
 	print_fine("freeing memory");
 	//free main_keeper stuff
-	for(int i=0; i<main_keeper_size; i++)
+	if(main_keeper_size>0)
 	{
-		for(int j=0; j<main_keeper_dim[i];j++)
+		for(int i=0; i<main_keeper_size; i++)
 		{
-			clear_valued_event(main_keeper[i][j]);
+			for(int j=0; j<main_keeper_dim[i];j++)
+			{
+				clear_valued_event(main_keeper[i][j]);
+			}
+			free(main_keeper[i]);
 		}
-		free(main_keeper[i]);
 	}
 	free(main_keeper);
 	free(main_keeper_dim);
-	print_fine("out_ar ordered on ts");
+	/*print_fine("out_ar ordered on ts");
 	for(int i=0; i<out_size; i++)
 	{
 		print_valued_event(out_ar+i);
+	}*/
+	if(out_ar>0)
+	{
+		print_fine("Worker %d ts bounds: [%d,%d]",worker_id,out_ar[0].valued_event_ts,out_ar[out_size-1].valued_event_ts);
 	}
-	//simple parallel section. Free memory while sending the valued_event array
 	int counter=0;
 	int remaining_events=out_size;
 	char stop=0;
-	//singal for correct probing
-	unsigned int probe= (counter<out_size) ? 1 : 0;
-	MPI_Send(&probe,1,MPI_UNSIGNED,MPI_MASTER,VALUED_EVENT_PROBE_TAG*worker_id,MPI_COMM_WORLD);
-	print_fine("first element of worker %d has ts: %d", worker_id, out_ar[0].valued_event_ts);
-	//print_valued_event(out_ar);
+	int master_ts;
 	while(counter<out_size)
 	{
 		MPI_Status ret;
 		int used_elements=0;
-		int master_ts;
-		//print_fine("Worker %d is at barrier", worker_id);
-		//MPI_Recv(&master_ts, 1,MPI_INT, MPI_MASTER, VALUED_EVENT_TS_TAG*worker_id, MPI_COMM_WORLD, &ret);
-		MPI_Bcast(&master_ts,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
-		//print_fine("Wroker %d got ts: %d", worker_id,master_ts);
+		MPI_Recv(&master_ts,1,MPI_INT,MPI_MASTER,VALUED_EVENT_TS_TAG*worker_id,MPI_COMM_WORLD,&ret);
 		int send_buf_count=0;
 		while(counter<out_size && out_ar[counter].valued_event_ts<master_ts)
 		{
@@ -173,7 +181,6 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		{
 			send_buf_count++;
 		}
-		//print_fine("Worker %d had buf count of %d for master_ts=%d", worker_id,send_buf_count, master_ts);
 		valued_event * send_buf = malloc(sizeof(valued_event)*send_buf_count);
 		memcpy(send_buf,out_ar+counter,sizeof(valued_event)*send_buf_count);
 		MPI_Send(&send_buf_count,1,MPI_INT,MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
@@ -190,16 +197,19 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 				}
 			}
 			MPI_Send(send_buf,send_buf_count,mpi_valued_event,MPI_MASTER,VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
-			//print_fine("Worker %d sent a valued_event array %d big for ts: %d", worker_id, send_buf_count, master_ts);
 		}
 		free(send_buf);
 		counter=counter+send_buf_count;
 	}
+	print_fine("worker %d began quitting routine after ts: %d", worker_id,master_ts);
 	int stop_worker_request_code=-1;
 	int useless_buf;
-	MPI_Bcast(&useless_buf,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
+	MPI_Recv(&useless_buf,1,MPI_INT,MPI_MASTER,VALUED_EVENT_TS_TAG*worker_id,MPI_COMM_WORLD,&ret);
 	MPI_Send(&stop_worker_request_code,1,MPI_INT, MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
-	free(out_ar);
+	if(out_size>0)
+	{
+		free(out_ar);
+	}
 	print_info("Worker %d terminating successfully (:", worker_id);
 	return 0;
 }

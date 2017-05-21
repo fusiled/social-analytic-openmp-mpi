@@ -2,6 +2,13 @@
 #include "event_generator.h"
 #include "event_list.h"
 
+
+#if defined(__clang__) || defined (__GNUC__)
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS __attribute__((no_sanitize_address))
+#else
+# define ATTRIBUTE_NO_SANITIZE_ADDRESS
+#endif
+
 void swap(event * array[], int first_index, int second_index);
 
 void swap_valued_events(valued_event * array[], int first_index, int second_index);
@@ -62,7 +69,7 @@ void sort_valued_events_on_score_with_array(valued_event * array, int begin, int
        while(l < r)
           if (array[l].score > pivot_score ||
            (array[l].score==pivot_score && array[l].valued_event_ts < pivot_ve_ts) ||
-           (array[l].score==pivot_score && array[l].valued_event_ts < pivot_ve_ts && array[l].last_comment_ts < pivot_lc_ts) )
+           (array[l].score==pivot_score && array[l].valued_event_ts == pivot_ve_ts && array[l].last_comment_ts < pivot_lc_ts) )
              l++;
           else {
              r--;
@@ -88,6 +95,8 @@ void swap_valued_events(valued_event * array[], int first_index, int second_inde
     array[first_index] = array[second_index];
     array[second_index] = temp;
 }
+
+
 
 void swap_valued_events_with_array(valued_event * array, int first_index, int second_index)
 {

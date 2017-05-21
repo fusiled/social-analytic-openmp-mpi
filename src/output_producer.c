@@ -34,28 +34,17 @@ char * to_string_top_three(valued_event * tt, int ts);
 int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi_valued_event, int start_ts)
 {
   MPI_Status ret;
-  //int ts=1265001000;
-  //int ts=1264993-100;
   int ts=start_ts-100;
   print_info("Start ts: %d", ts);
-  unsigned int worker_terminated_mask=0;
+  char * worker_terminated_mask=calloc(sizeof(char),group_size-1);
   int active_workers=group_size-1;
-  //probe workers that can transmit something
-  for(int worker=1; worker<group_size;worker++)
-  {
-    unsigned int probe;
-    MPI_Recv(&probe,1,MPI_UNSIGNED,worker,VALUED_EVENT_PROBE_TAG*worker,MPI_COMM_WORLD,&ret );
-    if(probe==0)
-    {
-      worker_terminated_mask|= 1<< (worker-1);
-      active_workers--;
-    }
-  }
-  valued_event current_top_three[TOP_NUMBER];
+  print_fine("active_workers: %d",active_workers);
+  int top_score_array_size=TOP_NUMBER;
+  valued_event *  top_score_array=malloc(sizeof(valued_event)*top_score_array_size);
   for(int i=0; i<TOP_NUMBER;i++)
   {
-     valued_event * ve_buf=new_valued_event(-1,-1,-1,-1,-1,-1,-1);
-    current_top_three[i]=*ve_buf;
+    valued_event * ve_buf=new_dummy_valued_event();
+    top_score_array[i]=*ve_buf;
     clear_valued_event(ve_buf);
   }
 
@@ -67,7 +56,7 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     return -1;
   }
 
-  while( worker_terminated_mask < (1<<group_size-1)-1 && active_workers>0 )
+  while( active_workers>0 )
   {
     //check every 28 days
     if(ts%(24*60*60*7*4)==0)
@@ -80,21 +69,20 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     valued_event ** ve_matrix=malloc(sizeof(valued_event*)*active_workers);
     int * ve_matrix_dim=malloc(sizeof(valued_event*)*active_workers);
     int ve_matrix_size=0;
-    //print_fine("--------------------------ts: %d",ts);
-    MPI_Bcast(&ts_buf,1,MPI_INT,MPI_MASTER,MPI_COMM_WORLD);
-    for(int i=0; i<group_size-1;i++)
+    for(int i=0; i<group_size-1; i++)
     {
       int rec_size;
-      if( ( (worker_terminated_mask >> i) & 1 )==0 )
+      if( worker_terminated_mask[i]==0 )
       {
+        MPI_Send(&ts,1,MPI_INT,i+1,VALUED_EVENT_TS_TAG*(i+1),MPI_COMM_WORLD);
         MPI_Recv(&rec_size,1,MPI_INT,i+1,VALUED_EVENT_NUMBER_TAG*(i+1),MPI_COMM_WORLD,&ret);
-        //print_fine("Received rec_size of %d from worker %d for ts %d", rec_size, i+1,ts);
         //remove worker from active ones.
         if(rec_size<0)
         {
-          worker_terminated_mask|= 1U<<i;
-          print_info("Master removed worker %d publishers",i+1);
+          worker_terminated_mask[i]=1;
           active_workers--; 
+          print_info("Master removed worker %d at ts %d. active_workers: %d",i+1,ts,active_workers);
+          continue;
         }
         else
         {
@@ -106,20 +94,17 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
             valued_event * ve_ar=malloc(sizeof(valued_event)*rec_size);
             if(ve_ar==NULL)
             {
-              //print_error("Cannot malloc valued_events array in reception of worker %d", i+1);
+              print_error("Cannot malloc valued_events array in reception of worker %d", i+1);
               return -1;
             }
             //print_fine("master is w8ing for ve_ar reception from %d for ts %d",i+1,ts);
             MPI_Recv(ve_ar,rec_size,mpi_valued_event,i+1,VALUED_EVENT_TRANSMISSION_TAG*(i+1), MPI_COMM_WORLD, &ret);
-            //print_fine("Master received valued_events of size %d from worker %d for ts %d. put array at position %d of ve_matrix", rec_size, i+1,ts, ve_matrix_size);
             ve_matrix[ve_matrix_size]=ve_ar;
             ve_matrix_size++;
           }
         }
       }
     }
-    //print_fine("combining for ts %d",ts);
-    //print_fine("ve_matrix_size: %d", ve_matrix_size);
     if(ve_matrix_size==0)
     {
       free(ve_matrix);
@@ -128,7 +113,6 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     }
     int global_ve_size;
     valued_event * ve_ar =merge_valued_event_array_score_ordered(ve_matrix, ve_matrix_dim, ve_matrix_size, &global_ve_size);
-    //print_fine("produced ordered ve_ar");
     //ve _matrix is no longer needed
     for(int j=0; j<ve_matrix_size; j++)
     {
@@ -136,19 +120,19 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
     }
     free(ve_matrix);
     free(ve_matrix_dim);
-    //print_fine("master ve_ar for ts: %d", ts);
+    /*print_fine("master ve_ar for ts: %d", ts);
     for(int i=0; i<global_ve_size;i++)
     {
       print_valued_event(ve_ar+i);
-    }
-    valued_event * final_ve = malloc(sizeof(valued_event)*(TOP_NUMBER+global_ve_size));
-    memcpy(final_ve,current_top_three,sizeof(valued_event)*TOP_NUMBER);
-    int final_ve_size=TOP_NUMBER;
-    //merge current_top_three and ve_ar into final_ve
+    }*/
+    valued_event * final_ve = malloc(sizeof(valued_event)*(top_score_array_size+global_ve_size));
+    memcpy(final_ve,top_score_array,sizeof(valued_event)*top_score_array_size);
+    int final_ve_size=top_score_array_size;
+    //merge top_score_array and ve_ar into final_ve
     for(int i=0; i<global_ve_size; i++ )
     {
       char changed=0;
-      for(int j=0; changed==0 && j<TOP_NUMBER;j++)
+      for(int j=0; changed==0 && j<top_score_array_size;j++)
       {
         if(final_ve[j].post_id==ve_ar[i].post_id)
         {
@@ -162,37 +146,77 @@ int produce_output_file(char *output_file_name, int group_size, MPI_Datatype mpi
         final_ve_size++;
       }
     }
+    final_ve = realloc(final_ve,sizeof(valued_event)*final_ve_size);
+    if(final_ve==NULL)
+    {
+      print_fine("Cannot realloc final_ve");
+    }
     sort_valued_events_on_score_with_array(final_ve,0,final_ve_size-1);
-    /*print_fine("created final_ve. Printing it");
+    /*print_fine("created final_ve for ts %d. Printing it", ts);
     for(int i=0; i<final_ve_size; i++)
     {
       print_valued_event(final_ve+i);
     }*/
     char changed=0;
+    char all_zero=1;
     for(int i=0; changed==0 &&  i<TOP_NUMBER;i++)
     {
-      if(final_ve[i].post_id!=current_top_three[i].post_id ||
-        final_ve[i].score!=current_top_three[i].score ||
-        final_ve[i].n_commenters!=current_top_three[i].n_commenters)
+      if(final_ve[i].post_id!=top_score_array[i].post_id ||
+        final_ve[i].score!=top_score_array[i].score ||
+        final_ve[i].n_commenters!=top_score_array[i].n_commenters)
       {
         changed=1;
       }
+      if(all_zero==1 && final_ve[i].score>0)
+      {
+        all_zero=0;
+      }
     }
-    if(changed==1)
+    if(changed==1 && all_zero!=1)
     {
       //print_fine("writin output at ts: %d", ts);
       char * output_line = to_string_top_three(final_ve, ts);
       //print_info("writing %s to output_line", output_line);
       fprintf(out_fp, "%s\n", output_line);
       free(output_line);
-      memcpy(current_top_three,final_ve,sizeof(valued_event)*TOP_NUMBER);
+
+      int lowest_important_score = final_ve[TOP_NUMBER-1].score;
+      int score_counter=TOP_NUMBER-1;
+      while(score_counter<final_ve_size && lowest_important_score>0 && lowest_important_score==final_ve[score_counter].score)
+      {
+        score_counter++;
+      }
+      top_score_array= realloc(top_score_array,sizeof(valued_event)*score_counter);
+      if(top_score_array==NULL)
+      {
+        print_error("error in top_score_array realloc");
+        return -1;
+      }
+      memcpy(top_score_array,final_ve,sizeof(valued_event)*score_counter);
+      top_score_array_size = score_counter;
+      if(top_score_array_size<TOP_NUMBER)
+      {
+        top_score_array=realloc(top_score_array,sizeof(valued_event)*TOP_NUMBER);
+        while(top_score_array_size<TOP_NUMBER)
+        {
+          valued_event * buf = new_dummy_valued_event();
+          top_score_array[top_score_array_size]=*buf;
+          clear_valued_event(buf);
+          top_score_array_size++;
+        }
+      }
     }
     free(ve_ar);
     free(final_ve);
   }
+  free(worker_terminated_mask);
+  free(top_score_array);
   fclose(out_fp);
   return 0;
 }
+
+
+
 
 
 char * to_string_top_three(valued_event * tt, int ts)
@@ -220,7 +244,8 @@ char * to_string_top_three(valued_event * tt, int ts)
     {
       strcat(output,"-,-,-,-");
     }
-    else{
+    else
+    {
       if(tt[i].post_id==-1)
       {
         strcat(output,UNDEF_SIGN);

@@ -40,6 +40,8 @@ void add_element(event_list* list, int valued_event_ts,int post_ts, long post_id
 int add_valued_event_in_order(event_list* list, valued_event* ve);
 
 
+valued_event * new_dummy_valued_event();
+
 //malloc a new valued_event with given parameters
 valued_event * new_valued_event(int valued_event_ts,int post_ts, long post_id,long user_id, int score, int n_commenters, int last_comment_ts);
 

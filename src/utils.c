@@ -21,10 +21,22 @@ void del_double_ref_array(void ** array, int size)
 
 int get_int_time(char * time_string, const char * time_format_string)
 {
-	struct tm tm;
-	strptime(time_string, time_format_string, &tm);
-	time_t t = mktime(&tm);
-	return t;
+	struct tm t;
+    char * buf = strtok(time_string,"-T:.");
+    t.tm_year = atoi(buf)-1900;
+    buf = strtok(NULL,"-T:.");
+    t.tm_mon = atoi(buf)-1; 
+    buf = strtok(NULL,"-T:.");  
+    t.tm_mday = atoi(buf);
+    buf = strtok(NULL,"-T:.");
+    t.tm_hour = atoi(buf);
+    buf = strtok(NULL,"-T:.");
+    t.tm_min = atoi(buf);
+    buf = strtok(NULL,"-T:.");
+    t.tm_sec = atoi(buf);
+    t.tm_isdst = -1;        // Is DST on? 1 = yes, 0 = no, -1 = unknown
+	time_t sec_time = mktime(&t);
+	return (int)sec_time;
 }
 
 

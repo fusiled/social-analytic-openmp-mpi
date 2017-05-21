@@ -304,5 +304,6 @@ int process_posts_and_transmit(char * path_to_post_file, int group_size, int buc
     MPI_Send(&STOP_POST_TRANSMISSION_SIGNAL, 1, MPI_INT, i, POST_NUMBER_TAG*i, MPI_COMM_WORLD);
   }
   print_info("Signaled the end of post transmission to all the nodes");
+  MPI_Barrier(MPI_COMM_WORLD);
   return first_ts;
 }

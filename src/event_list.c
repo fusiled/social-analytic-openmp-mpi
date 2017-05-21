@@ -61,7 +61,10 @@ void clear_event_list(event_list * list)
 }
 
 
-
+valued_event * new_dummy_valued_event()
+{
+    return new_valued_event(INT_MAX,INT_MAX,-1,-1,-1,-1,INT_MAX);
+}
 
 valued_event * new_valued_event(int valued_event_ts,int post_ts, long post_id,long user_id, int score, int n_commenters, int last_comment_ts)
 {
@@ -349,12 +352,6 @@ valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, in
 
 valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
 {
-    //order arrays in ve_arr
-    /*#pragma omp parallel for
-    for (int i = 0; i < ve_size; i++)
-    {
-        sort_valued_events_on_score_with_array(ve_arr[i],0,ve_dim[i]-1);
-    }*/
     //malloc space
     int out_size=0;
     for(int i=0; i<ve_size;i++)
@@ -375,7 +372,7 @@ valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, in
         //get element with minimum timestamp
         int score=INT_MIN;
         int post_ts=INT_MAX;
-        long last_comment_ts=INT_MAX;
+        int last_comment_ts=INT_MAX;
         for(int i=0; i<ve_size;i++)
         {
             int counter = counter_ar[i];
