@@ -40,21 +40,17 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
         for (j=0;j<num_events;j++)
         {
             score = update_score(score, ee[j]->type, ee[j]->is_comment);
-            if(score==0)
-            {
-                score=-1;
-            }
             //print_event(ee[j]);
             if (ee[j]->is_comment && ee[j]->type == CREATION )
             {
                 last_comment_ts=ee[j]->timestamp;
                 nCommenters = update_nCommenters(nCommenters,n_commenters_ar,ee[j]->user_id);
             }
-            //print_info("adding element with score %d and n_commenters %d", score, nCommenters);
             if (score <= 0)
             {
                 break;
             }
+            //print_info("adding element with score %d and n_commenters %d", score, nCommenters);
             add_element(e_list,ee[j]->timestamp,ee[j]->post_ts, ee[j]->post_id, pb[i]->user_id , score, nCommenters,last_comment_ts);
         }
         //print_info("pre free");

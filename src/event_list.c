@@ -267,7 +267,6 @@ char check_if_quit(int * ve_dim,int * counter_ar, int ve_size)
 
 valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
 {
-    print_fine("in merge_valued_event_array_with_ref");
     //malloc space
     int out_size=0;
     for(int i=0; i<ve_size;i++)

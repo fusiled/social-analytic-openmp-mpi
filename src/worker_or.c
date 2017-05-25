@@ -95,8 +95,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	    #pragma omp single nowait 
 	    {
 	    	#pragma omp task  shared(worker_id, main_keeper, main_keeper_dim, main_keeper_size)
-	    	{
-	    		int t_num = omp_get_thread_num();		    		
+	    	{		    		
 	    		int v_event_size;
 	    		//with this function we generate an array of pointers to valued events.
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
@@ -105,7 +104,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
       			{
       				main_keeper[main_keeper_size] = v_event_array;
       				main_keeper_dim[main_keeper_size] = v_event_size;
-					print_fine("(%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, main_keeper_size);
+					print_fine("Worker %d processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, main_keeper_size);
       				main_keeper_size++;
       			}
 				for(int i=0; i<*n_posts; i++)
