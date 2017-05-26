@@ -1,13 +1,13 @@
 #include "event_list.h"
-
 #include "debug_utils.h"
 //include for sorting facilities
 #include "quicksort.h"
-#include "global_variables.h"
 
 #include <stdlib.h>
+
 #include <limits.h>
 
+#include "global_variables.h"
 
 extern const int TOP_NUMBER;
 
@@ -26,6 +26,7 @@ valued_event_list_element* create_valued_list_element_alreadyExistent(valued_eve
 //PRIVATE function
 //It does not delete the valued_event contained into the element of the list
 void destroy_valued_list_element(valued_event_list_element* el);
+
 
 
 //PRIVATE FUNCTION. associated to merge_valued_event_with_ref_[something].
@@ -298,11 +299,6 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
         out_ref[out_counter]=*(ve_arr[index][ counter_ar[index] ]);
         counter_ar[index] = counter_ar[index]+1;
         out_counter++;
-        /*if(out_ref[out_counter-1].post_id==38851936)
-        {
-            print_fine("merging ve of pid: 38851936");
-            print_valued_event(out_ref+(out_counter-1));
-        }*/
     }
     free(counter_ar);
     *out_size_ref=out_size;

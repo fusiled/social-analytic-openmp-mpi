@@ -9,15 +9,11 @@
 
 #define ONEDAY 60*60*24
 
-
-/**
-* event is produced from post_block and it is, actually an event. When a new post or comment is created
-* or when there's a decrement of the score, then there's an event.
-**/
 typedef struct event
 {
     int timestamp;
     int post_ts;
+    //post_block * post;
     long user_id;
     long post_id;
     char is_comment;

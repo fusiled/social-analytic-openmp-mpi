@@ -2,6 +2,7 @@
 #ifndef POST_H
 #define POST_H
 
+#include "comment_list.h"
 
 /**
 * Header for the post struct and all the function utilities associated to it

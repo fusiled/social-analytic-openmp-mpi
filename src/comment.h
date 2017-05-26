@@ -14,6 +14,10 @@ typedef struct comment
 	reply_type repl_ty;
 }comment;
 
+
+
+
+
 //create a new comment with the given timestamp, comment_id, user_id, id of the post/comment 
 //that it has been replied and the reply type (that can be POST_REPLY_TYPE or COMMENT_REPLY_TYPE)
 //If invalid argumants are passed of malloc fails then NULL is returned

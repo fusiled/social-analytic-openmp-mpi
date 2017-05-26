@@ -2,12 +2,8 @@
 #define UTILS_H
 
 
-/***
-* generic utility functions
-**/
-
-
 void del_double_ref_array( void ** array, int size);
+
 
 //pass a string that represent time and a string that represents the time format
 //of the time_string. The function will return the seconds passed from the UNIX

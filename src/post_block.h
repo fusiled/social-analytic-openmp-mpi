@@ -3,8 +3,9 @@
 
 
 /**
-* This data structure is what the workers must handle as input from
-* master.
+* This data structure is what the workers must handle to compute the top3.
+* The the comments near to fields to understand what they are.
+*
 **/
 
 typedef struct post_block

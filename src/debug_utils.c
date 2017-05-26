@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdarg.h>
-#include <stdlib.h>
 
 
 #define NONE_LEVEL 0
@@ -98,5 +97,4 @@ void print_error(char * msg, ...)
 		print_msg_private(ERROR_TAG, msg, vargs);
 		va_end( vargs );
 	}
-	exit(-1);
 }

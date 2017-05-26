@@ -2,6 +2,7 @@
 
 #include "comment_list.h"
 #include "debug_utils.h"
+#include "khash.h"
 
 #include <stdlib.h>
 
@@ -16,6 +17,7 @@ post * new_post(int ts, long post_id, long user_id)
 	ret_ref->ts = ts;
 	ret_ref->post_id = post_id;
 	ret_ref->user_id = user_id;
+	//print_info("Returning a new post @%p with ts=%d, post_id=%ld, user_id=%ld",ret_ref, ret_ref->ts, ret_ref->post_id, ret_ref->user_id);
 	return ret_ref;
 }
 

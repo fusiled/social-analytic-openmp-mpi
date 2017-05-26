@@ -31,13 +31,8 @@ void sort_events(event * array[], int begin, int end)
           }
        l--;
        swap(array,begin,l);
-       #pragma omp parallel sections
-       {
-         #pragma omp section
-         sort_events(array, begin, l);
-         #pragma omp section
-         sort_events(array, r, end);
-       }
+       sort_events(array, begin, l);
+       sort_events(array, r, end);
     }
 }
 
@@ -57,13 +52,8 @@ void sort_valued_events(valued_event * array[], int begin, int end)
           }
        l--;
        swap_valued_events(array,begin,l);
-       #pragma omp parallel sections
-       {
-        #pragma omp section
-        sort_valued_events(array, begin, l);
-        #pragma omp section
-        sort_valued_events(array, r, end);
-       }
+       sort_valued_events(array, begin, l);
+       sort_valued_events(array, r, end);
     }
 }
 
@@ -87,13 +77,8 @@ void sort_valued_events_on_score_with_array(valued_event * array, int begin, int
           }
        l--;
        swap_valued_events_with_array(array,begin,l);
-       #pragma omp sections
-       {
-         #pragma omp section
-         sort_valued_events_on_score_with_array(array, begin, l);
-         #pragma omp section
-         sort_valued_events_on_score_with_array(array, r, end);
-       }
+       sort_valued_events_on_score_with_array(array, begin, l);
+       sort_valued_events_on_score_with_array(array, r, end);
     }
 }
 

@@ -10,7 +10,6 @@
 list_entry * new_list_entry(comment * com);
 
 
-//PRIVATE
 //destroy the passed list_entry.
 void del_list_entry(list_entry * l_entry);
 

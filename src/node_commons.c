@@ -1,9 +1,10 @@
 #include "node_commons.h"
 
 
-#include <stdlib.h>
 #include <omp.h>
-#include <mpi.h>
+#include "mpi.h"
+
+#include <stdlib.h>
 
 #include "global_variables.h"
 #include "debug_utils.h"

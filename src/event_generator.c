@@ -1,9 +1,9 @@
 #include "event_generator.h"
 
-#include <stdlib.h>
-
 #include "post_block.h"
 #include "debug_utils.h"
+
+#include "stdlib.h"
 #include "quicksort.h"
 
 event ** generate_events(post_block * post, int* event_size)

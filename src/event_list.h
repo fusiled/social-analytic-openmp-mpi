@@ -1,14 +1,6 @@
 #ifndef EVENT_LIST
 #define EVENT_LIST
 
-
-/**
-* This file contains all the functions realted to valued_event s and to event_list.
-* event_list is, in fact, A LIST OF VALUED_EVENTS, not a list of events contained in
-* event_generator.*
-*
-**/
-
 typedef struct valued_event
 {
 	int valued_event_ts;
@@ -70,8 +62,7 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
 //NOTE: The array returned has a copy of the elements, not the reference, so it is very important to free it
 valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
 
-//Sort passed array on score. Biggest score comes first. The second criterion considered is the minor
-//valued_event_ts, then the third is the last_comment_ts is considered
+
 valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref);
 
 
