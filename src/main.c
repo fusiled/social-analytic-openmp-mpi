@@ -4,16 +4,13 @@
 #include "master.h"
 #include "worker.h"
 #include "global_variables.h"
-
 #include "node_commons.h"
-
-
-#include "mpi.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <omp.h>
+#include <mpi.h>
 
 /**
 * MAIN FILE. Just init the MPI environment, launch master routines or worker 

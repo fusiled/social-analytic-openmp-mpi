@@ -22,6 +22,7 @@ void print_info(char * msg, ...);
 
 void print_fine(char * msg, ...);
 
+/**NOTE. Printin an error terminates the execution!*/
 void print_error(char * msg, ...);
 
 

@@ -13,7 +13,6 @@
 
 #include "quicksort.h"
 
-
 #include <stdlib.h>
 
 #include <mpi.h>
@@ -45,22 +44,15 @@ post_block * receive_post(int worker_id)
     int * comment_ts=NULL;
     long * comment_user_id=NULL;
 	MPI_Recv(post_ts,1,MPI_INT,MPI_MASTER,POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret);
-	//print_fine("Worker %d received post_ts %d", worker_id, *post_ts);
     MPI_Recv(post_id,1,MPI_LONG,MPI_MASTER,POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret);
-    //print_fine("Worker %d received post_id %ld", worker_id, *post_id);
     MPI_Recv(user_id,1,MPI_LONG,MPI_MASTER,POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret);
-    //print_fine("Worker %d received user_id %ld", worker_id, *user_id);
     MPI_Recv(comment_ar_size,1,MPI_INT,MPI_MASTER,POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD,&ret);
-    //print_fine("Worker %d received comment_ar_size %d", worker_id, *comment_ar_size);
     if( *comment_ar_size >0)
     {
 	    comment_ts = calloc(sizeof(int), *comment_ar_size);
 	    comment_user_id = calloc(sizeof(long), *comment_ar_size);
-	    MPI_Recv(comment_ts,*comment_ar_size,MPI_INT,MPI_MASTER, POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret);
-	    //print_fine("Worker %d received comment_ts of post %ld", worker_id, *post_id);
+	    MPI_Recv(comment_ts,*comment_ar_size,MPI_INT,MPI_MASTER, POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret)
 	    MPI_Recv(comment_user_id,*comment_ar_size,MPI_LONG, MPI_MASTER, POST_EXCHANGE_TAG*worker_id,MPI_COMM_WORLD, &ret);
-	    //print_fine("Worker %d received comment_user_id  of post %ld", worker_id, *post_id);
-
 	}
     post_block * ret_pb = new_post_block(*post_ts,*post_id,*user_id,*comment_ar_size,comment_ts,comment_user_id);
     free(post_ts);
@@ -74,12 +66,16 @@ post_block * receive_post(int worker_id)
 int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_valued_event)
 {
 	MPI_Status ret;
-	//wait for job reception. If i receive a negative number then i can stop to listen
-	int * n_posts = malloc(sizeof(int));
+	//init keeper stuff
 	valued_event *** main_keeper = malloc(sizeof(valued_event **)*MAX_EVENT_KEEPER_SIZE );
 	int * main_keeper_dim = malloc(sizeof(int)*MAX_EVENT_KEEPER_SIZE );
 	int main_keeper_size=0;
 	print_info("Worker %d is waiting for n_posts...", worker_id);
+	
+	/** POST_BLOCK RECEPTION PHASE
+	*quit if *n_posts<0, which means that master has finished to transmit post_blocks
+	*/
+	int * n_posts = malloc(sizeof(int));
 	MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	while(*n_posts>=0)
 	{
@@ -90,13 +86,13 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 			//mpi routine for receive
 			pb_ar[i] = receive_post(worker_id);
 		}
-		print_fine("Worker %d received a post_block. Spawning task");
+		print_fine("Worker %d received a post_block");
+		//spawn a task to process the post_block and to produce valued_event elements
 		#pragma omp parallel
 	    #pragma omp single nowait 
 	    {
-	    	#pragma omp task  shared(worker_id, main_keeper, main_keeper_dim, main_keeper_size)
-	    	{
-	    		int t_num = omp_get_thread_num();		    		
+	    	#pragma omp task shared(worker_id, main_keeper, main_keeper_dim, main_keeper_size)
+	    	{	    		
 	    		int v_event_size;
 	    		//with this function we generate an array of pointers to valued events.
 	    		valued_event** v_event_array =  process_events(pb_ar, *n_posts, &v_event_size);
@@ -105,9 +101,10 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
       			{
       				main_keeper[main_keeper_size] = v_event_array;
       				main_keeper_dim[main_keeper_size] = v_event_size;
-					print_fine("(%d) processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, main_keeper_size);
+					print_fine("Worker %d processed produced a top_three sequence. put it at position %d in main_keeper", worker_id, main_keeper_size);
       				main_keeper_size++;
       			}
+      			//free the post_block
 				for(int i=0; i<*n_posts; i++)
 				{
 					del_post_block(pb_ar[i]);
@@ -115,7 +112,6 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 				free(pb_ar);
 	    	}
 	    }
-		print_fine("Worker %d is waiting for n_posts...", worker_id);
 		MPI_Recv(n_posts,1,MPI_INT, MPI_MASTER, POST_NUMBER_TAG*worker_id,MPI_COMM_WORLD, &ret);
 	}
 	#pragma omp barrier
@@ -123,6 +119,11 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	free(n_posts);
 	print_info("Worker %d received the stop signal for post trasmission. main_keeper_size: %d", worker_id, main_keeper_size);
 	
+
+	/**
+	* MERGE ALL THE VALUED_EVENTS TOGETHER IN A SINGLE ARRAY
+	* the array is ordered on valued_event_ts field. low timestamps goes first
+	*/
 	valued_event * out_ar;
 	int out_size;
 	if(main_keeper_size>0)
@@ -139,8 +140,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		out_ar=NULL;
 		out_size=0;
 	}
-	print_fine("freeing memory");
-	//free main_keeper stuff
+	//free main_keeper stuff. It's not needed anymore
 	if(main_keeper_size>0)
 	{
 		for(int i=0; i<main_keeper_size; i++)
@@ -154,18 +154,19 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 	}
 	free(main_keeper);
 	free(main_keeper_dim);
-	/*print_fine("out_ar ordered on ts");
-	for(int i=0; i<out_size; i++)
-	{
-		print_valued_event(out_ar+i);
-	}*/
+
+	/*
+	* VALUED_EVENT TRANSMISSION PHASE
+	* workers wait for a timestamp from master. When it gets master_ts fetches from out_ar
+	* the events at the specified timestamp and transmit at most TOP_NUMBER. A greater number
+	* is not necessary. When the worker has no more valued_event to transmit it end its execution
+	* signaling master that he has no more valued_events.
+	*/
 	if(out_ar>0)
 	{
 		print_fine("Worker %d ts bounds: [%d,%d]",worker_id,out_ar[0].valued_event_ts,out_ar[out_size-1].valued_event_ts);
 	}
 	int counter=0;
-	int remaining_events=out_size;
-	char stop=0;
 	int master_ts;
 	while(counter<out_size)
 	{
@@ -183,33 +184,31 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 		}
 		valued_event * send_buf = malloc(sizeof(valued_event)*send_buf_count);
 		memcpy(send_buf,out_ar+counter,sizeof(valued_event)*send_buf_count);
-		MPI_Send(&send_buf_count,1,MPI_INT,MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
+		int send_buf_n_elements;
+		if(send_buf_count>TOP_NUMBER)
+		{
+			send_buf_n_elements=TOP_NUMBER;
+		}
+		else
+		{
+			send_buf_n_elements=send_buf_count;
+		}
+		MPI_Send(&send_buf_n_elements,1,MPI_INT,MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
 		if(send_buf_count>0)
 		{
 			sort_valued_events_on_score_with_array(send_buf, 0, send_buf_count-1);
-			if(send_buf_count>TOP_NUMBER)
-			{
-				send_buf = realloc(send_buf,sizeof(valued_event)*TOP_NUMBER);
-				send_buf_count=TOP_NUMBER;
-				if(send_buf==NULL)
-				{
-					print_error("Cannot realloc send_buf in worker %d", worker_id);
-				}
-			}
-			MPI_Send(send_buf,send_buf_count,mpi_valued_event,MPI_MASTER,VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
+			MPI_Send(send_buf,send_buf_n_elements,mpi_valued_event,MPI_MASTER,VALUED_EVENT_TRANSMISSION_TAG*worker_id, MPI_COMM_WORLD);
 		}
 		free(send_buf);
 		counter=counter+send_buf_count;
 	}
-	print_fine("worker %d began quitting routine after ts: %d", worker_id,master_ts);
 	int stop_worker_request_code=-1;
-	int useless_buf;
-	MPI_Recv(&useless_buf,1,MPI_INT,MPI_MASTER,VALUED_EVENT_TS_TAG*worker_id,MPI_COMM_WORLD,&ret);
+	MPI_Recv(&master_ts,1,MPI_INT,MPI_MASTER,VALUED_EVENT_TS_TAG*worker_id,MPI_COMM_WORLD,&ret);
 	MPI_Send(&stop_worker_request_code,1,MPI_INT, MPI_MASTER,VALUED_EVENT_NUMBER_TAG*worker_id,MPI_COMM_WORLD);
 	if(out_size>0)
 	{
 		free(out_ar);
 	}
-	print_info("Worker %d terminating successfully (:", worker_id);
+	print_info("Worker %d terminated successfully (:", worker_id);
 	return 0;
 }

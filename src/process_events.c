@@ -5,7 +5,6 @@
 #include "debug_utils.h"
 
 #include <stdlib.h>
-
 #include <limits.h>
 
 int update_score(int score, char action_type, char is_comment);
@@ -50,10 +49,8 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
             {
                 break;
             }
-            //print_info("adding element with score %d and n_commenters %d", score, nCommenters);
             add_element(e_list,ee[j]->timestamp,ee[j]->post_ts, ee[j]->post_id, pb[i]->user_id , score, nCommenters,last_comment_ts);
         }
-        //print_info("pre free");
         free(n_commenters_ar);
         clear_events(ee,num_events);
     }
@@ -105,7 +102,6 @@ int update_nCommenters(int nCommenters, long* commenters_ar, long user_id)
         // The commenter id is new. Save it
         commenters_ar[nCommenters] = user_id;
         nCommenters = nCommenters +1;
-        //print_info("increased n_commenters");
     }
     return nCommenters;
 }
