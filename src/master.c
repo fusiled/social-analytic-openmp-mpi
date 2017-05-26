@@ -9,7 +9,7 @@
 #include "parser.h"
 #include "global_variables.h"
 #include "output_producer.h"
-
+#include "comment_list.h"
 
 //library includes
 #include <mpi.h>
