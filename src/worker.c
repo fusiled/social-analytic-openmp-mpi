@@ -86,7 +86,7 @@ int worker_execution(int argc , char * argv[], int worker_id, MPI_Datatype mpi_v
 			//mpi routine for receive
 			pb_ar[i] = receive_post(worker_id);
 		}
-		print_fine("Worker %d received a post_block");
+		print_fine("Worker %d received a post_block", worker_id);
 		//spawn a task to process the post_block and to produce valued_event elements
 		#pragma omp parallel
 	    #pragma omp single nowait 
