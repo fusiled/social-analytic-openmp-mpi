@@ -30,14 +30,14 @@ int DEBUG_LEVEL = 0;
 
 void set_debug_level(int new_level)
 {
-	DEBUG_LEVEL = new_level;
-	print_msg("NEWS", "new DEBUG_LEVEL = %d", DEBUG_LEVEL );
+    DEBUG_LEVEL = new_level;
+    print_msg("NEWS", "new DEBUG_LEVEL = %d", DEBUG_LEVEL );
 }
 
 int get_debug_level()
 {
-	print_msg("NEWS", "current DEBUG_LEVEL = %d", DEBUG_LEVEL );
-	return DEBUG_LEVEL;
+    print_msg("NEWS", "current DEBUG_LEVEL = %d", DEBUG_LEVEL );
+    return DEBUG_LEVEL;
 }
 
 void print_msg_private( char * tag, char* msg, va_list args ) {
@@ -49,52 +49,52 @@ void print_msg_private( char * tag, char* msg, va_list args ) {
 void print_msg(char * tag, char * msg, ...)
 {
     va_list vargs;
-	va_start(vargs, msg);
-	print_msg_private(tag,msg,vargs);
-	va_end( vargs );
+    va_start(vargs, msg);
+    print_msg_private(tag,msg,vargs);
+    va_end( vargs );
 }
 
 void print_info(char * msg, ...)
 {
-	if(DEBUG_LEVEL<=INFO_LEVEL)
-	{
-		va_list vargs;
-		va_start(vargs, msg);
-		print_msg_private(INFO_TAG,msg,vargs);
-		va_end( vargs );
-	}
+    if(DEBUG_LEVEL<=INFO_LEVEL)
+    {
+        va_list vargs;
+        va_start(vargs, msg);
+        print_msg_private(INFO_TAG,msg,vargs);
+        va_end( vargs );
+    }
 }
 
 void print_warning(char * msg, ...)
 {
-	if(DEBUG_LEVEL<=WARN_LEVEL)
-	{
-		va_list vargs;
-		va_start(vargs, msg);
-		print_msg_private(WARN_TAG,msg, vargs);
-		va_end( vargs );
-	}
+    if(DEBUG_LEVEL<=WARN_LEVEL)
+    {
+        va_list vargs;
+        va_start(vargs, msg);
+        print_msg_private(WARN_TAG,msg, vargs);
+        va_end( vargs );
+    }
 }
 
 
 void print_fine(char * msg, ...)
 {
-	if(DEBUG_LEVEL<=FINE_LEVEL)
-	{
-		va_list vargs;
-		va_start(vargs, msg);
-		print_msg_private(FINE_TAG, msg, vargs);
-		va_end( vargs );
-	}
+    if(DEBUG_LEVEL<=FINE_LEVEL)
+    {
+        va_list vargs;
+        va_start(vargs, msg);
+        print_msg_private(FINE_TAG, msg, vargs);
+        va_end( vargs );
+    }
 }
 
 void print_error(char * msg, ...)
 {
-	if(DEBUG_LEVEL<=ERROR_LEVEL)
-	{
-		va_list vargs;
-		va_start(vargs, msg);
-		print_msg_private(ERROR_TAG, msg, vargs);
-		va_end( vargs );
-	}
+    if(DEBUG_LEVEL<=ERROR_LEVEL)
+    {
+        va_list vargs;
+        va_start(vargs, msg);
+        print_msg_private(ERROR_TAG, msg, vargs);
+        va_end( vargs );
+    }
 }

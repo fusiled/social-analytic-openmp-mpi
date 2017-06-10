@@ -9,7 +9,7 @@
 #include <stdio.h>
 
 /**
-* Header for parsers of the input files. 
+* Header for parsers of the input files.
 * See the implementation parser.c for the details.
 *
 **/

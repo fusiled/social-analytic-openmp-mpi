@@ -14,8 +14,8 @@ extern const int TOP_NUMBER;
 //PRIVATE function.
 //malloc a valued_list_element and initialize it with the specified fields
 valued_event_list_element* create_valued_list_element(int valued_event_ts,int post_ts,
- long post_id,long user_id, int score, int n_commenters, int last_comment_ts,
- valued_event_list_element* next);
+        long post_id,long user_id, int score, int n_commenters, int last_comment_ts,
+        valued_event_list_element* next);
 
 // PRIVATE function.
 // Create a valued list element from an already existent valued event
@@ -210,7 +210,7 @@ void clear_valued_event(valued_event* ve)
 }
 
 valued_event_list_element* create_valued_list_element(int valued_event_ts,int post_ts, long post_id,
-    long user_id, int score, int n_commenters, int last_comment_ts, valued_event_list_element* next)
+        long user_id, int score, int n_commenters, int last_comment_ts, valued_event_list_element* next)
 {
     valued_event_list_element* el = malloc(sizeof(valued_event_list_element));
     if (el==NULL)
@@ -247,7 +247,7 @@ void destroy_valued_list_element(valued_event_list_element* el)
 void print_valued_event(valued_event * ve)
 {
     print_msg("VALUED_EL","adr: %p, ve_ts: %d, post_ts: %d, post_id: %ld, score: %d, n_commenters: %d, last_comment_ts: %d",
-        ve,ve->valued_event_ts, ve->post_ts,ve->post_id, ve->score, ve->n_commenters, ve->last_comment_ts);
+              ve,ve->valued_event_ts, ve->post_ts,ve->post_id, ve->score, ve->n_commenters, ve->last_comment_ts);
 }
 
 
@@ -269,7 +269,7 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
 {
     //malloc space
     int out_size=0;
-    for(int i=0; i<ve_size;i++)
+    for(int i=0; i<ve_size; i++)
     {
         out_size = out_size + ve_dim[i];
     }
@@ -286,7 +286,7 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
         int index = -1;
         //get element with minimum timestamp
         int ts=INT_MAX;
-        for(int i=0; i<ve_size;i++)
+        for(int i=0; i<ve_size; i++)
         {
             int counter = counter_ar[i];
             if( counter < ve_dim[i] && ts > ve_arr[i][counter]->valued_event_ts )
@@ -308,9 +308,9 @@ valued_event * merge_valued_event_array_with_ref(valued_event *** ve_arr, int * 
 
 valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, int ve_size, int * out_size_ref)
 {
-     //malloc space
+    //malloc space
     int out_size=0;
-    for(int i=0; i<ve_size;i++)
+    for(int i=0; i<ve_size; i++)
     {
         out_size = out_size + ve_dim[i];
     }
@@ -328,7 +328,7 @@ valued_event * merge_valued_event_array(valued_event ** ve_arr, int * ve_dim, in
         int index = -1;
         //get element with minimum timestamp
         int ts=INT_MAX;
-        for(int i=0; i<ve_size;i++)
+        for(int i=0; i<ve_size; i++)
         {
             int counter = counter_ar[i];
             if( counter < ve_dim[i] &&  ts > ve_arr[i][counter].valued_event_ts )
@@ -353,7 +353,7 @@ valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, in
 {
     //malloc space
     int out_size=0;
-    for(int i=0; i<ve_size;i++)
+    for(int i=0; i<ve_size; i++)
     {
         out_size = out_size + ve_dim[i];
     }
@@ -372,14 +372,14 @@ valued_event * merge_valued_event_array_score_ordered(valued_event ** ve_arr, in
         int score=INT_MIN;
         int post_ts=INT_MAX;
         int last_comment_ts=INT_MAX;
-        for(int i=0; i<ve_size;i++)
+        for(int i=0; i<ve_size; i++)
         {
             int counter = counter_ar[i];
             if( counter < ve_dim[i] && (
-                score < ve_arr[i][counter].score ||
-                (score==ve_arr[i][counter].score && post_ts > ve_arr[i][counter].post_ts) ||
-                (score==ve_arr[i][counter].score && post_ts == ve_arr[i][counter].post_ts && last_comment_ts > ve_arr[i][counter].last_comment_ts))
-            )
+                        score < ve_arr[i][counter].score ||
+                        (score==ve_arr[i][counter].score && post_ts > ve_arr[i][counter].post_ts) ||
+                        (score==ve_arr[i][counter].score && post_ts == ve_arr[i][counter].post_ts && last_comment_ts > ve_arr[i][counter].last_comment_ts))
+              )
             {
                 score = ve_arr[i][counter].score;
                 post_ts = ve_arr[i][counter].post_ts;

@@ -43,15 +43,15 @@ const int COMMENT_INPUT_ENTRIES = 7;
 **/
 char ** parse_line(char * line, const char * delim, int dim)
 {
-	char ** ret_ref = calloc(sizeof(char *), dim);
+    char ** ret_ref = calloc(sizeof(char *), dim);
     char *p, *var2, *var3;
     int ret_iterator=0;
- 	var2=strdup(line);   // allocates enough space for var1 and copies the contents
+    var2=strdup(line);   // allocates enough space for var1 and copies the contents
     var3=var2;           // save off var2, since strsep changes it
     while ((p = strsep(&var2,delim)) != NULL) {   // p contains the token
-    	ret_ref[ret_iterator]=malloc(sizeof(char)*(strlen(p)+1));
-    	memcpy(ret_ref[ret_iterator],p, sizeof(char)*(strlen(p)+1) );
-    	ret_iterator++;
+        ret_ref[ret_iterator]=malloc(sizeof(char)*(strlen(p)+1));
+        memcpy(ret_ref[ret_iterator],p, sizeof(char)*(strlen(p)+1) );
+        ret_iterator++;
     }
     free(var3);          // var2 is now NULL, so use var3 instead
     return ret_ref;
@@ -63,16 +63,16 @@ char ** parse_line(char * line, const char * delim, int dim)
 **/
 post * process_post_line(char * line)
 {
-	int ts;
-	long post_id, user_id;
-	char ** buf = parse_line(line,POST_DELIMITERS, POST_INPUT_ENTRIES);
-	ts = get_int_time(buf[POST_TIMESTAMP], TIME_FORMAT_STRING);
-	//atoll gets a string and produces a long long unsigned int representation of it.
+    int ts;
+    long post_id, user_id;
+    char ** buf = parse_line(line,POST_DELIMITERS, POST_INPUT_ENTRIES);
+    ts = get_int_time(buf[POST_TIMESTAMP], TIME_FORMAT_STRING);
+    //atoll gets a string and produces a long long unsigned int representation of it.
     post_id = atol(buf[POST_ID]);
     user_id = atol(buf[POST_USER_ID]);
-	//free the buf array (see utils.h)
-	del_double_ref_array( (void **)buf, POST_INPUT_ENTRIES);
-	return new_post(ts, post_id, user_id);
+    //free the buf array (see utils.h)
+    del_double_ref_array( (void **)buf, POST_INPUT_ENTRIES);
+    return new_post(ts, post_id, user_id);
 }
 
 
@@ -99,14 +99,13 @@ comment * process_comment_line(char * line)
         reply_id = comm_replied;
         repl_ty = COMMENT_REPLY_TYPE;
     }
-    else
-    if(post_replied!=0){
+    else if(post_replied!=0) {
         reply_id = post_replied;
         repl_ty = POST_REPLY_TYPE;
     }
     else
     {
-        return NULL;    
+        return NULL;
     }
     return new_comment(ts, comment_id, user_id, reply_id, repl_ty);
 }
@@ -118,46 +117,46 @@ comment * process_comment_line(char * line)
 **/
 post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
 {
-	if(n_lines<=0 || post_fp==NULL)
-	{
-		return NULL;
-	}
-    if(feof(post_fp)){
+    if(n_lines<=0 || post_fp==NULL)
+    {
+        return NULL;
+    }
+    if(feof(post_fp)) {
         print_warning("reached end of POST file... returning null");
         return NULL;
     }
-	//the number of read lines from this function. This variable
-	//will be returned through the pointer read_lines
-	int return_read_lines=0;
-	//allocate some space to save posts. This will be trimmed if
-	//at the end of the while return_read_lines < n_lines
-	post * post_array = calloc(sizeof(post), n_lines);
-	if(post_array==NULL)
-	{
-		*read_lines=0;
-		return NULL;
-	}
-	//file related stuff
+    //the number of read lines from this function. This variable
+    //will be returned through the pointer read_lines
+    int return_read_lines=0;
+    //allocate some space to save posts. This will be trimmed if
+    //at the end of the while return_read_lines < n_lines
+    post * post_array = calloc(sizeof(post), n_lines);
+    if(post_array==NULL)
+    {
+        *read_lines=0;
+        return NULL;
+    }
+    //file related stuff
     size_t len = 0;
     ssize_t read;
     //buffer for the current line.
-	char * line = NULL;
+    char * line = NULL;
     while ( (return_read_lines<n_lines) && ((read = getline(&line, &len, post_fp)) != -1) )
     {
-    	//print_fine("read line %s", line);
-    	post * post_buf=process_post_line(line);
-    	if(post_buf==NULL)
-    	{
-    		print_warning("Error in process_post_line");
-    		*read_lines=return_read_lines;
-    		break;
-    	}
-    	else
-    	{
-    		memcpy(post_array+return_read_lines,post_buf, sizeof(post));
-    	}
+        //print_fine("read line %s", line);
+        post * post_buf=process_post_line(line);
+        if(post_buf==NULL)
+        {
+            print_warning("Error in process_post_line");
+            *read_lines=return_read_lines;
+            break;
+        }
+        else
+        {
+            memcpy(post_array+return_read_lines,post_buf, sizeof(post));
+        }
         del_post(post_buf);
-    	return_read_lines++;
+        return_read_lines++;
     }
     if (line)
     {
@@ -168,8 +167,8 @@ post * parse_post(FILE * post_fp, int n_lines, int * read_lines)
     if(trimmed_post_array==NULL)
     {
         print_error("Error on malloc of trimmed_post_array");
-    	free(post_array);
-    	return NULL;
+        free(post_array);
+        return NULL;
     }
     memcpy(trimmed_post_array, post_array, sizeof(post)*return_read_lines);
     free(post_array);
@@ -186,7 +185,7 @@ comment * parse_comment(FILE * comm_fp, int n_lines, int * read_lines)
     {
         return NULL;
     }
-    if(feof(comm_fp)){
+    if(feof(comm_fp)) {
         print_warning("reached end of COMMENT file... returning null");
         return NULL;
     }

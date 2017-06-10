@@ -37,7 +37,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
                 return NULL;
             }
         }
-        for (j=0;j<num_events;j++)
+        for (j=0; j<num_events; j++)
         {
             score = update_score(score, ee[j]->type, ee[j]->is_comment);
             //print_event(ee[j]);
@@ -51,7 +51,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
                 break;
             }
             //print_info("adding element with score %d and n_commenters %d", score, nCommenters);
-            add_element(e_list,ee[j]->timestamp,ee[j]->post_ts, ee[j]->post_id, pb[i]->user_id , score, nCommenters,last_comment_ts);
+            add_element(e_list,ee[j]->timestamp,ee[j]->post_ts, ee[j]->post_id, pb[i]->user_id, score, nCommenters,last_comment_ts);
         }
         //print_info("pre free");
         free(n_commenters_ar);
@@ -59,7 +59,7 @@ valued_event** process_events(post_block** pb, int size, int * v_event_size)
     }
     // Return the array after deleting the list
     valued_event** ve = get_sorted_array(e_list);
-    *v_event_size = e_list->size; 
+    *v_event_size = e_list->size;
     clear_event_list(e_list);
     return ve;
 }
@@ -93,7 +93,7 @@ int update_nCommenters(int nCommenters, long* commenters_ar, long user_id)
     }
     int found=0;
     // The array is big enough to contain the worst case of commenters, i.e., every one comments only once.
-    for (int i=0; !found && i<nCommenters;i++)
+    for (int i=0; !found && i<nCommenters; i++)
     {
         if (commenters_ar[i] == user_id)
         {

@@ -3,7 +3,7 @@
 
 typedef struct valued_event
 {
-	int valued_event_ts;
+    int valued_event_ts;
     int post_ts;
     long post_id;
     long user_id;
@@ -35,7 +35,7 @@ void clear_event_list(event_list * e_list);
 //Add a new valued_event to the specified event_list
 void add_element(event_list* list, int valued_event_ts,int post_ts, long post_id,long user_id, int score, int n_commenters, int last_comment_ts);
 
-// Add a new already existent valued_event in order into the list. Return true iff 
+// Add a new already existent valued_event in order into the list. Return true iff
 // there is a change in the top-3
 int add_valued_event_in_order(event_list* list, valued_event* ve);
 

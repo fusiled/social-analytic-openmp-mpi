@@ -7,12 +7,11 @@
 /**
 * Header for the post struct and all the function utilities associated to it
 **/
-
 typedef struct post_struct
 {
-	int ts;
-	long post_id;
-	long user_id;
+    int ts;
+    long post_id;
+    long user_id;
 } post;
 
 //Creates a new post. A new empty comment_list is also created
