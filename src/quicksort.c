@@ -87,13 +87,8 @@ void sort_valued_events_on_score_with_array(valued_event * array, int begin, int
             }
         l--;
         swap_valued_events_with_array(array,begin,l);
-        #pragma omp parallel sections shared(array,begin,end,l,r)
-        {
-            #pragma omp section
-            sort_valued_events_on_score_with_array(array, begin, l);
-            #pragma omp section
-            sort_valued_events_on_score_with_array(array, r, end);
-        }
+        sort_valued_events_on_score_with_array(array, begin, l);
+        sort_valued_events_on_score_with_array(array, r, end);
     }
 }
 
